@@ -48,11 +48,11 @@
           <!-- Triangle orange centré sur le T (entre S et G) -->
           <polygon points="48,2 70,36 26,36" fill="#E87722"/>
           <!-- Lettres SGTM avec plus d'espace -->
-          <text x="1" y="68" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="30" fill="white" letter-spacing="2">SGTM</text>
+          <text x="1" y="68" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="25" fill="white" letter-spacing="2">SGTM</text>
         </svg>
       </div>
-      <div class="sgtm-brand-sub">SUIVI AVANCEMENT</div>
-      <div class="sgtm-brand-cat">Gradins</div>
+      <div class="sgtm-brand-sub">         </div>
+      <div class="sgtm-brand-cat"></div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -77,11 +77,11 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 5h16M2 10h16M2 15h16"/></svg>
       </button>
       <div class="topbar-titles">
-        <div class="topbar-main-title">Tableau de bord de suivi des travaux des Gradins</div>
+       <div class="topbar-main-title" style="color:#ffffff;">Tableau de bord de gestion des réservations</div>
         <div class="topbar-meta">
           <div class="topbar-meta-block">
             <span class="topbar-meta-label">PROJET</span>
-            <span class="topbar-meta-text">Travaux de construction du Grand Stade de Casablanca - Lot n°3</span>
+            <span class="topbar-meta-text">Travaux de construction du Grand Stade de Casablanca - Travaux synthèse </span>
           </div>
       </div>
     </div>
@@ -115,7 +115,7 @@
       </div>
     </div>
     <div class="qf-group">
-      <label class="qf-item-label">Zone</label>
+      <label class="qf-item-label">Type</label>
       <div class="ms-wrapper" id="msZone">
         <button class="ms-btn" onclick="toggleDropdown('msZone')">
           Tout <span class="ms-badge" id="msZoneBadge" style="display:none"></span>
@@ -132,16 +132,6 @@
           <svg viewBox="0 0 12 12" fill="currentColor" width="9"><path d="M2 4l4 4 4-4z"/></svg>
         </button>
         <div class="ms-dropdown" id="msNiveauDrop"></div>
-      </div>
-    </div>
-    <div class="qf-group">
-      <label class="qf-item-label">Grue</label>
-      <div class="ms-wrapper" id="msGrue">
-        <button class="ms-btn" onclick="toggleDropdown('msGrue')">
-          Tout <span class="ms-badge" id="msGrueBadge" style="display:none"></span>
-          <svg viewBox="0 0 12 12" fill="currentColor" width="9"><path d="M2 4l4 4 4-4z"/></svg>
-        </button>
-        <div class="ms-dropdown" id="msGrueDrop"></div>
       </div>
     </div>
     <div class="qf-group">
@@ -189,7 +179,7 @@
     <div class="activity-body">
       <div class="activity-item">
         <div class="activity-header">
-          <span class="activity-name">Ferraillage</span>
+          <span class="activity-name">Ouverture murale</span>
           <span class="activity-pct" id="ferrPct">—</span>
         </div>
         <div class="activity-bar-bg">
@@ -198,7 +188,7 @@
       </div>
       <div class="activity-item">
         <div class="activity-header">
-          <span class="activity-name">Coulage</span>
+          <span class="activity-name">Ouverture plancher</span>
           <span class="activity-pct" id="coulPct">—</span>
         </div>
         <div class="activity-bar-bg">
@@ -207,7 +197,7 @@
       </div>
       <div class="activity-item">
         <div class="activity-header">
-          <span class="activity-name">Pose</span>
+          <span class="activity-name">Porte</span>
           <span class="activity-pct" id="posePct">—</span>
         </div>
         <div class="activity-bar-bg">
@@ -220,13 +210,12 @@
   <!-- 3. Avancement par Bloc (chart intégré) -->
   <div class="panel top-card top-card-wide">
     <div class="panel-header-row">
-      <div class="panel-title-sm">AVANCEMENT PAR BLOC</div>
-      <select class="panel-select" id="blocMetric" onchange="updateBlocChart()">
-        <option value="pct">% Réalisé</option>
-        <option value="abs">Valeurs absolues</option>
-      </select>
+      <div class="panel-title-sm">NOMBRE LEVÉE TOPO</div>
     </div>
-    <div class="bloc-chart-wrap"><canvas id="blocChart"></canvas></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;">
+      <div style="font-size:48px;font-weight:800;color:#D7AA48;letter-spacing:-1px;" id="kpiTopoCount">—</div>
+      <div style="font-size:12px;color:#6b7a8d;font-weight:500;">Levée réalisée</div>
+    </div>
   </div>
 
   <!-- 4. Avancement Entreprise -->
@@ -264,16 +253,16 @@
   <!-- Table Bloc et Activité -->
   <div class="panel bottom-left">
     <div class="panel-header-row">
-      <div class="panel-title-sm">AVANCEMENT PAR BLOC ET PAR ACTIVITÉ</div>
+      <div class="panel-title-sm">ETAT DES RESERVATIONS</div>
     </div>
     <div class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
             <th>BLOC</th>
-            <th>FERRAILLAGE %</th>
-            <th>COULAGE %</th>
-            <th>POSE %</th>
+            <th>OUVERTURE MURALE %</th>
+            <th>OUVERTURE PLANCHER %</th>
+            <th>Porte %</th>
             <th>AVANCEMENT GLOBAL %</th>
           </tr>
         </thead>

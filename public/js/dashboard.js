@@ -202,45 +202,44 @@ window.onQuickFilter = function() {
 
 function applyViewerFilter(filteredElements, hasFilter) {
   if (!viewer || !viewer.model) return;
+
+  // Toujours afficher tous les éléments
+  viewer.showAll();
+  viewer.clearThemingColors(viewer.model);
+  viewer.clearSelection();
+
   if (!hasFilter) {
-    viewer.showAll();
-    viewer.clearThemingColors(viewer.model);
-    viewer.clearSelection();
     coloringApplied = false;
     document.getElementById('btnColor')?.classList.remove('active');
     return;
   }
 
   const filteredSet = new Set(filteredElements.map(el => parseInt(el.id)).filter(n => !isNaN(n)));
-  const allIds     = AppState.allElements.map(el => parseInt(el.id)).filter(n => !isNaN(n));
-  const hiddenIds  = allIds.filter(id => !filteredSet.has(id));
+  const allIds = AppState.allElements.map(el => parseInt(el.id)).filter(n => !isNaN(n));
   const filteredArr = [...filteredSet];
 
-  // Le rendu de ce modèle plante/désynchronise quand on manipule une TRÈS grande liste
-  // d'un coup (hide() ou isolate()). Solution : toujours opérer sur la plus petite des
-  // deux listes (celle à cacher ou celle à montrer), jamais sur la grande.
-  viewer.showAll();
-  if (filteredArr.length <= hiddenIds.length) {
-    // Le sous-ensemble filtré est le plus petit → l'isoler directement
-    viewer.isolate(filteredArr);
-  } else {
-    // Le complément (à cacher) est le plus petit → cacher seulement celui-là
-    if (hiddenIds.length > 0) viewer.hide(hiddenIds);
-  }
-
-  // Colorier par statut les éléments filtrés
-  viewer.clearThemingColors(viewer.model);
-  for (const el of filteredElements) {
-    const id = parseInt(el.id);
-    if (!isNaN(id)) {
-      viewer.setThemingColor(id, getAPSColor(el.statut), viewer.model, true);
+// Éléments NON sélectionnés → encore plus transparents
+const ghostColor = new THREE.Vector4(0.4, 0.4, 0.4, 0.02); // 0.05 → 0.02
+  allIds.forEach(id => {
+    if (!filteredSet.has(id)) {
+      viewer.setThemingColor(id, ghostColor, viewer.model, true);
     }
+  });
+
+// Éléments sélectionnés → orange vif au lieu de la couleur statut
+for (const el of filteredElements) {
+  const id = parseInt(el.id);
+  if (!isNaN(id)) {
+    viewer.setThemingColor(id, new THREE.Vector4(0.91, 0.47, 0.13, 1.0), viewer.model, true);
   }
+}
   coloringApplied = true;
   document.getElementById('btnColor')?.classList.add('active');
 
+  // Surbrillance supplémentaire via sélection APS
+  viewer.select(filteredArr);
+
   // Zoomer sur les éléments filtrés
-  viewer.clearSelection();
   if (filteredArr.length > 0) {
     setTimeout(() => viewer.fitToView(filteredArr), 200);
   }

@@ -48,6 +48,10 @@ async function loadDataFromViewer(viewer) {
       null,
       {
         propFilter: [
+          'ID_TOPO',
+          'TOPO_TYPE_SUPPORT',
+          'TOPO_BLOC',
+          'TOPO BLOC',
           'BLOC',
           'ZONE',
           'ME_ELEMENT LEVEL', 'ME_ELEMENT SUB ZONE',
@@ -120,6 +124,7 @@ function normalizeElementFromViewer(raw) {
     }
     return null;
   };
+  const idTopo = get('ID_TOPO') || get('id_topo') || null;
 
   const phase1 = get('Phase 1', 'phase 1');
   const reste  = get('RESTE');
@@ -136,13 +141,14 @@ function normalizeElementFromViewer(raw) {
   // ME_ELEMENT TYPE — ex: 'GD', 'MS', 'VO', etc.
   const elementTypeRaw = get('ME_ELEMENT TYPE', 'me_element type');
   const elementType    = elementTypeRaw ? String(elementTypeRaw).trim().toUpperCase() : null;
+  const topoType       = get('TOPO_TYPE_SUPPORT') ? String(get('TOPO_TYPE_SUPPORT')).trim() : null;
 
   return {
     id:          String(raw.dbId),
     expressId:   raw.dbId,
     elementType,                              // ← ME_ELEMENT TYPE (ex: 'GD')
-    bloc:        get('BLOC') ? String(get('BLOC')).trim() : null,
-    zone:        get('ZONE') ? String(get('ZONE')).trim() : null,
+    bloc:        get('TOPO_BLOC') ? String(get('TOPO_BLOC')).trim() : get('TOPO BLOC') ? String(get('TOPO BLOC')).trim() : get('BLOC') ? String(get('BLOC')).trim() : null,
+    zone:        topoType || (get('ZONE') ? String(get('ZONE')).trim() : null),
     level:       get('ME_ELEMENT LEVEL') ? String(get('ME_ELEMENT LEVEL')).trim() : null,
     niveau:      get('ME_ELEMENT SUB ZONE') ? String(get('ME_ELEMENT SUB ZONE')).trim() : null,
     grue:        toBBFlag(get('Inaccessible')) === 1 ? 'XCMG' : 'GRUE_TOUR',
@@ -150,7 +156,9 @@ function normalizeElementFromViewer(raw) {
     coul:        toBBFlag(get('BB COULAGE', 'BB_COULAGE')),
     pose:        toBBFlag(get('BB POSE', 'BB_POSE')),
     volume:      parseVolumeValue(get('Volume')),
+    idTopo: idTopo ? String(idTopo).trim() : null,
     statut,
+    
   };
 }
 
