@@ -357,3 +357,31 @@ function renderTypeOrientation(elements) {
   renderTypeOrientationBars('toOrientationBars', toStats.orientationList);
   renderTypeOrientationCrossTable(toStats);
 }
+
+// ── État × Type / État × Orientation (page 3 du carousel) ─────────────────────
+function renderEtatCrossTable(headId, bodyId, cols, byEtat) {
+  const head = document.getElementById(headId);
+  const body = document.getElementById(bodyId);
+  if (!head || !body) return;
+
+  head.innerHTML = `<th>ÉTAT</th>` + cols.map(c => `<th>${c.toUpperCase()}</th>`).join('') + `<th>TOTAL</th>`;
+
+  body.innerHTML = ETAT_ORDER.map(etat => {
+    const row = byEtat[etat] || {};
+    const total = cols.reduce((sum, c) => sum + (row[c] || 0), 0);
+    const cells = cols.map(c => `<td>${(row[c] || 0).toLocaleString('fr-FR')}</td>`).join('');
+    const color = ETAT_DOT_COLORS[etat] || '#9AA0A6';
+    return `
+      <tr>
+        <td><span class="eo-dot" style="background:${color}"></span><span style="color:${color}">${etat}</span></td>
+        ${cells}
+        <td><strong>${total.toLocaleString('fr-FR')}</strong></td>
+      </tr>`;
+  }).join('');
+}
+
+function renderEtatCross(elements) {
+  const stats = computeEtatCrossStats(elements);
+  renderEtatCrossTable('eoTypeHead', 'eoTypeBody', stats.typeCols, stats.byEtatType);
+  renderEtatCrossTable('eoOrientationHead', 'eoOrientationBody', stats.orientCols, stats.byEtatOrient);
+}

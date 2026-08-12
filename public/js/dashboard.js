@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
     renderReservationsParEtat(computeEtatStats(AppState.allElements));
     renderTypeOrientation(AppState.allElements);
+    renderEtatCross(AppState.allElements);
     initMultiSelects(AppState.stats);
   }
 
@@ -61,6 +62,7 @@ window.onViewerReady = async function(viewerInst) {
   renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
   renderReservationsParEtat(computeEtatStats(AppState.allElements));
   renderTypeOrientation(AppState.allElements);
+  renderEtatCross(AppState.allElements);
   // Vider et reconstruire les dropdowns avec les vraies données du viewer
   ['msBlocDrop','msZoneDrop','msOrientationDrop','msTypeDrop','msEtatDrop'].forEach(id => {
     const drop = document.getElementById(id);
@@ -195,6 +197,7 @@ window.onQuickFilter = function() {
   renderSecteursDeSecteur(computeEtatStats(filteredElements));
   renderReservationsParEtat(computeEtatStats(filteredElements));
   renderTypeOrientation(filteredElements);
+  renderEtatCross(filteredElements);
 
   const etatActive = MSState.etat.size > 0;
   const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||MSState.orientation.size>0||MSState.type.size>0||etatActive;
@@ -371,6 +374,7 @@ window.resetQuickFilters = function() {
   renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
   renderReservationsParEtat(computeEtatStats(AppState.allElements));
   renderTypeOrientation(AppState.allElements);
+  renderEtatCross(AppState.allElements);
 
 if (viewer) {
     viewer.showAll();
@@ -408,9 +412,29 @@ window.exportPDF = function() {
   document.title = `BIM Dashboard SGTM — ${new Date().toLocaleDateString('fr-FR')}`;
   window.print();
 };
-// ── Carousel KPI (page État ↔ page Type/Orientation) ──────────────────────────
+// ── Carousel KPI (État ↔ Type/Orientation ↔ État×Type/État×Orientation) ───────
 let kpiCarouselIndex = 0;
-const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION'];
+const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION', 'ÉTAT × TYPE / ORIENTATION'];
+
+function initKpiCarousel() {
+  const track = document.getElementById('kpiCarouselTrack');
+  const dotsWrap = document.getElementById('kpiNavDots');
+  if (!track) return;
+  const slideCount = track.children.length;
+
+  // Largeurs dynamiques (fonctionne quel que soit le nombre de slides)
+  track.style.width = (slideCount * 100) + '%';
+  Array.from(track.children).forEach(slide => {
+    slide.style.width = (100 / slideCount) + '%';
+  });
+
+  // Générer les points de navigation selon le nombre réel de slides
+  if (dotsWrap) {
+    dotsWrap.innerHTML = Array.from({ length: slideCount })
+      .map((_, i) => `<span class="kpi-dot${i === kpiCarouselIndex ? ' active' : ''}"></span>`)
+      .join('');
+  }
+}
 
 window.kpiCarouselGo = function(direction) {
   const track = document.getElementById('kpiCarouselTrack');
@@ -426,3 +450,5 @@ window.kpiCarouselGo = function(direction) {
     dot.classList.toggle('active', i === kpiCarouselIndex);
   });
 };
+
+document.addEventListener('DOMContentLoaded', initKpiCarousel);

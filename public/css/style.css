@@ -95,7 +95,7 @@ body { display:flex; height:100vh; overflow:hidden; }
 }
 .topbar-left  { display:flex; align-items:center; gap:10px; flex:1; min-width:0; overflow:hidden; }
 .topbar-titles { display:flex; flex-direction:column; justify-content:center; gap:3px; flex:1; min-width:0; overflow:hidden; }
-.topbar-main-title { font-size:14px; font-weight:700; color: #16213e; white-space:nowrap; }
+.topbar-main-title { font-size:14px; font-weight:700; color: #fff; white-space:nowrap; }
 .topbar-meta { display:flex; align-items:baseline; gap:0; width:100%; min-width:0; }
 .topbar-meta-block { display:flex; flex-direction:row; align-items:baseline; gap:6px; flex:1; min-width:0; padding-right:16px; }
 .topbar-meta-sep { width:1px; background:rgba(255,255,255,0.15); margin:0 16px; align-self:stretch; flex-shrink:0; }
@@ -354,10 +354,10 @@ body { display:flex; height:100vh; overflow:hidden; }
 
 .kpi-carousel-viewport { overflow:hidden; flex:1; min-height:0; }
 .kpi-carousel-track {
-  display:flex; height:100%; width:200%;
+  display:flex; height:100%;
   transition:transform .35s ease;
 }
-.kpi-slide { width:50%; overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; padding:14px; gap:14px; }
+.kpi-slide { overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; padding:14px; gap:14px; }
 
 /* ===== Type / Orientation (barres) + Type × Orientation (tableau) ===== */
 .to-widget {
@@ -380,6 +380,25 @@ body { display:flex; height:100vh; overflow:hidden; }
 .to-widget .data-table th { font-size:10px; background:var(--bg-subtle,#f7f5f1); padding:10px 12px; }
 .to-widget .data-table td { font-size:13px; padding:10px 12px; }
 .to-widget .data-table tr:not(:last-child) td { border-bottom:1px solid var(--panel-border); }
+
+/* ===== État × Type / État × Orientation ===== */
+.eo-widget {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px 20px; color:var(--text-primary);
+}
+.eo-title { font-size:16px; font-weight:800; color:var(--text-primary); }
+.eo-sub   { font-size:12px; color:var(--text-secondary); margin-top:3px; margin-bottom:16px; }
+
+.eo-widget .table-wrap { max-height:none; overflow:visible; }
+.eo-table { width:100%; border-collapse:collapse; }
+.eo-table th {
+  text-align:left; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+  color:var(--text-secondary); background:var(--bg-subtle,#f7f5f1); padding:10px 8px; border-bottom:1px solid var(--panel-border);
+}
+.eo-table th:not(:first-child), .eo-table td:not(:first-child) { text-align:right; }
+.eo-table td { padding:12px 8px; font-size:13px; font-weight:700; color:var(--text-primary); border-bottom:1px solid var(--panel-border); }
+.eo-table tr:last-child td { border-bottom:none; }
+.eo-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; }
 
 /* ===== Réservations par état ===== */
 .rpe-widget {

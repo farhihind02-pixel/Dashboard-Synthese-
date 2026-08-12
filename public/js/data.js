@@ -438,3 +438,42 @@ function computeTypeOrientationStats(elements) {
 
   return { typeList, orientationList, orientationNames, cross };
 }
+
+// ── État × Type / État × Orientation — pour la page 3 du carousel KPI ─────────
+const ETAT_ORDER = ['Levé', 'À lever', 'À modéliser', 'À créer dans le chantier'];
+const ETAT_DOT_COLORS = {
+  'Levé': '#22b07d',
+  'À lever': '#E87722',
+  'À modéliser': '#4A78D9',
+  'À créer dans le chantier': '#D93077',
+};
+
+function computeEtatCrossStats(elements) {
+  const typeCols = new Set();
+  const orientCols = new Set();
+  const byEtatType = {};
+  const byEtatOrient = {};
+
+  for (const el of (elements || [])) {
+    const etat = el.resEtat;
+    if (!etat || !ETAT_ORDER.includes(etat)) continue;
+
+    if (el.resFamille) {
+      typeCols.add(el.resFamille);
+      if (!byEtatType[etat]) byEtatType[etat] = {};
+      byEtatType[etat][el.resFamille] = (byEtatType[etat][el.resFamille] || 0) + 1;
+    }
+    if (el.orientation) {
+      orientCols.add(el.orientation);
+      if (!byEtatOrient[etat]) byEtatOrient[etat] = {};
+      byEtatOrient[etat][el.orientation] = (byEtatOrient[etat][el.orientation] || 0) + 1;
+    }
+  }
+
+  return {
+    typeCols: [...typeCols].sort(),
+    orientCols: [...orientCols].sort(),
+    byEtatType,
+    byEtatOrient,
+  };
+}
