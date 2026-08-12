@@ -11,6 +11,7 @@
   --main-bg:        #f5f0e8;
   --panel-bg:       #FFFFFF;
   --panel-border:   #e8e0d0;
+  --bg-subtle:      #f7f5f1;
   --text-primary:   #1a1a18;
   --text-secondary: #6B6B6B;
   --text-muted:     #9E9993;
@@ -21,6 +22,29 @@
   --shadow: 0 2px 8px rgba(0,0,0,0.06);
   --font:   'Inter', system-ui, sans-serif;
 }
+
+/* ===== THÈME SOMBRE (tout le dashboard) ===== */
+body.dark-theme {
+  --main-bg:        #14161C;
+  --panel-bg:       #1C1F27;
+  --panel-border:   #2A2E38;
+  --bg-subtle:      #23262E;
+  --text-primary:   #F2F2F3;
+  --text-secondary: #9BA0AC;
+  --text-muted:     #6E7280;
+  --shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+body.dark-theme .to-bar-track,
+body.dark-theme .sc-bar-bg,
+body.dark-theme .topo-progress,
+body.dark-theme .rz-legend-item:hover { background:#2A2E38; }
+body.dark-theme .sc-tabs { background:#14161C; }
+body.dark-theme .sc-tab.active { background:#2A2E38; color:#fff; }
+body.dark-theme .qf-select,
+body.dark-theme .ms-btn,
+body.dark-theme .ms-dropdown { background:var(--panel-bg); color:var(--text-primary); border-color:var(--panel-border); }
+body.dark-theme .data-table tr:hover td,
+body.dark-theme .rz-legend-item:hover { background:var(--bg-subtle); }
 
 html, body { height:100%; font-family:var(--font); background:var(--main-bg); color:var(--text-primary); overflow:hidden; }
 body { display:flex; height:100vh; overflow:hidden; }
@@ -144,7 +168,7 @@ body { display:flex; height:100vh; overflow:hidden; }
 /* ===== FILTRES ===== */
 .quick-filters {
   display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-  padding:7px 16px; background:#fff; border-bottom:1px solid var(--panel-border); flex-shrink:0;
+  padding:7px 16px; background:var(--panel-bg); border-bottom:1px solid var(--panel-border); flex-shrink:0;
 }
 .qf-label { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.1em; color:var(--sgtm-orange); text-transform:uppercase; }
 .qf-group { display:flex; align-items:center; gap:5px; }
@@ -162,7 +186,7 @@ body { display:flex; height:100vh; overflow:hidden; }
 .ms-badge { background:var(--sgtm-orange); color:#fff; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:700; }
 .ms-dropdown {
   display:none; position:absolute; top:calc(100% + 4px); left:0;
-  background:#fff; border:1px solid var(--panel-border); border-radius:8px;
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:8px;
   box-shadow:0 4px 16px rgba(0,0,0,0.12); min-width:155px; max-height:200px; overflow-y:auto;
   z-index:1000; padding:4px 0;
 }
@@ -290,13 +314,18 @@ body { display:flex; height:100vh; overflow:hidden; }
 .kpi-amber { color:var(--sgtm-orange); }
 .kpi-red   { color:var(--red); }
 
-/* ===== BOTTOM ROW ===== */
-.bottom-row {
+/* ===== MAIN GRID (carousel pleine hauteur + colonne KPI/Maquette) ===== */
+.main-grid {
   display:grid;
-  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(300px, 38%) 1fr;
   gap:10px;
   padding:10px 14px 10px;
   flex:1; min-height:0; overflow:hidden;
+}
+
+.main-grid-right {
+  display:flex; flex-direction:column; gap:10px;
+  min-width:0; min-height:0; overflow:hidden;
 }
 
 .bottom-left {
@@ -464,7 +493,7 @@ body { display:flex; height:100vh; overflow:hidden; }
 }
 
 /* ===== VIEWER ===== */
-.bottom-right { min-height:0; min-width:0; display:flex; flex-direction:column; }
+.bottom-right { flex:1; min-height:0; min-width:0; display:flex; flex-direction:column; }
 .viewer-panel {
   background:var(--panel-bg); border:1px solid var(--panel-border);
   border-radius:var(--radius); box-shadow:var(--shadow);
@@ -630,38 +659,27 @@ body { display:flex; height:100vh; overflow:hidden; }
 #msSujetDrop .ms-item input {
   margin-right: 6px;
 }
-/* ===== Levées Topo + cartes descriptives (thème clair) ===== */
+/* ===== Levées Topo — grille KPI (3 cartes larges + 6 cartes) ===== */
 .topo-kpi-row {
-  display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:10px;
-  padding:0 14px 10px;
+  display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:8px;
+  min-width:0; flex-shrink:0;
 }
+.topo-card-wide { grid-column: span 2; }
 
 .topo-card {
-  background:var(--panel-bg); border:1px solid var(--panel-border); border-left:3px solid #C9A227;
-  border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px;
-}
-.topo-card-main {
-  border-left-color:transparent;
-  position:relative;
-}
-.topo-card-main::before {
-  content:'';
-  position:absolute; left:-1px; top:0; bottom:0; width:3px;
-  background:linear-gradient(to bottom, #22b07d 0%, #22b07d 50%, #4A78D9 50%, #4A78D9 100%);
-  border-radius:var(--radius) 0 0 var(--radius);
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-left:4px solid #C9A227;
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 14px;
+  min-width:0; overflow:hidden;
 }
 
 .topo-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-.topo-card-title { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-secondary); }
+.topo-card-title { font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .topo-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:1px; }
-.topo-dot-split {
-  background: conic-gradient(#22b07d 0deg 180deg, #4A78D9 180deg 360deg);
-}
 
-.topo-card-num { font-size:28px; font-weight:800; color:var(--text-primary); line-height:1.2; margin-top:4px; }
-.topo-card-sub { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+.topo-card-num { font-size:26px; font-weight:800; color:var(--text-primary); line-height:1.15; margin-top:4px; }
+.topo-card-sub { font-size:11px; color:var(--text-secondary); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.topo-progress { display:flex; height:6px; border-radius:4px; overflow:hidden; background:#EFECE5; margin-top:10px; }
+.topo-progress { display:flex; height:4px; border-radius:4px; overflow:hidden; background:#EFECE5; margin-top:8px; }
 .topo-progress-fill { height:100%; }
 .topo-progress-leve      { background:#22b07d; }
 .topo-progress-modeliser { background:#4A78D9; }
@@ -678,8 +696,16 @@ body { display:flex; height:100vh; overflow:hidden; }
 .topo-desc-title { font-size:13px; font-weight:700; color:var(--text-primary); }
 .topo-desc-text { font-size:11px; color:var(--text-secondary); line-height:1.5; }
 
-@media (max-width: 1100px) {
-  .topo-kpi-row, .topo-desc-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1300px) {
+  .topo-kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .topo-card-wide { grid-column: span 3; }
+}
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .topo-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topo-card-wide { grid-column: span 2; }
 }
 
 /* ===== Réservations par zone / Surface cumulée (page 4, thème clair) ===== */

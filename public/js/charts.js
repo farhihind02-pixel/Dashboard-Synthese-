@@ -2,7 +2,6 @@
  * charts.js — Graphiques SGTM
  */
 let kpiDonutChart=null, blocChart=null;
-let ssDonutMainChart=null, ssDonutSubChart=null;
 let rpeDonutChart=null;
 
 const SGTM_BLOCS = new Set(['1','2','3']);
@@ -146,16 +145,21 @@ function getBlocData(byBloc, blocs) {
 }
 
 function getBlocOptions() {
+  const dark = document.body.classList.contains('dark-theme');
+  const legendColor = dark ? '#9BA0AC' : '#6B6B6B';
+  const tickColor   = dark ? '#7A8090' : '#888';
+  const tickColor2  = dark ? '#9BA0AC' : '#AAA';
+  const gridColor   = dark ? '#2A2E38' : '#F0EFED';
   return {
     responsive:true, maintainAspectRatio:false, animation:{duration:400},
     onClick:(evt,els)=>{ if(els.length&&window.onBlocClick) window.onBlocClick(blocChart._rawBlocs?.[els[0].index] ?? blocChart.data.labels[els[0].index]); },
     plugins:{
-      legend:{ display:true, position:'bottom', labels:{font:{size:10},boxWidth:10,padding:6,color:'#6B6B6B'} },
+      legend:{ display:true, position:'bottom', labels:{font:{size:10},boxWidth:10,padding:6,color:legendColor} },
       tooltip:{ callbacks:{ label:ctx=> ` ${ctx.parsed.y.toLocaleString('fr-FR')} unités` } },
     },
     scales:{
-      x:{ grid:{display:false}, ticks:{font:{size:10},color:'#888'} },
-      y:{ grid:{color:'#F0EFED'}, ticks:{font:{size:10},color:'#AAA'} },
+      x:{ grid:{display:false}, ticks:{font:{size:10},color:tickColor} },
+      y:{ grid:{color:gridColor}, ticks:{font:{size:10},color:tickColor2} },
     },
   };
 }
@@ -212,7 +216,13 @@ function renderBlocActivityTable(elements) {
 }
 
 // ── Secteurs de secteur (donuts État) ──────────────────────────────────────────
-function renderSecteursDeSecteur(stats) {
+// Génère le contenu du widget "Lecture synthétique" dans un jeu d'éléments donné
+// (préfixe d'id). Utilisé pour afficher le MÊME widget à deux endroits du
+// dashboard : la carte autonome en haut de page (préfixe 'ssTop') et la page 1
+// du carousel "SECTEURS DE SECTEUR" (préfixe historique 'ss').
+let ssDonutCharts = {}; // { [prefix]: { main: Chart, sub: Chart } }
+
+function renderSecteursDeSecteurInto(stats, prefix) {
   if (!stats) return;
   const { leve, aLever, aModeliser, aCreer } = stats;
   const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
@@ -223,26 +233,29 @@ function renderSecteursDeSecteur(stats) {
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const fmt = n => (n || 0).toLocaleString('fr-FR') + ' réservations';
 
-  setText('ssCalloutPct',   combinedPct + ' %');
-  setText('ssCalloutCount', fmt(combinedCount));
+  setText(prefix + 'CalloutPct',   combinedPct + ' %');
+  setText(prefix + 'CalloutCount', fmt(combinedCount));
 
-  setText('ssPctALever',   pct(aLever.count) + ' %');
-  setText('ssCountALever', fmt(aLever.count));
-  setText('ssPctACreer',   pct(aCreer.count) + ' %');
-  setText('ssCountACreer', fmt(aCreer.count));
+  setText(prefix + 'PctALever',   pct(aLever.count) + ' %');
+  setText(prefix + 'CountALever', fmt(aLever.count));
+  setText(prefix + 'PctACreer',   pct(aCreer.count) + ' %');
+  setText(prefix + 'CountACreer', fmt(aCreer.count));
 
-  setText('ssPctLeve',       total > 0 ? (leve.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
-  setText('ssCountLeve',     fmt(leve.count));
-  setText('ssPctAModeliser', total > 0 ? (aModeliser.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
-  setText('ssCountAModeliser', fmt(aModeliser.count));
+  setText(prefix + 'PctLeve',       total > 0 ? (leve.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
+  setText(prefix + 'CountLeve',     fmt(leve.count));
+  setText(prefix + 'PctAModeliser', total > 0 ? (aModeliser.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
+  setText(prefix + 'CountAModeliser', fmt(aModeliser.count));
 
-  setText('ssTotal', fmt(total));
+  setText(prefix + 'Total', fmt(total));
+
+  if (!ssDonutCharts[prefix]) ssDonutCharts[prefix] = { main: null, sub: null };
+  const store = ssDonutCharts[prefix];
 
   // Donut principal : À lever / À créer sur chantier / (Levé + À modéliser combinés)
-  const ctxMain = document.getElementById('ssDonutMain');
+  const ctxMain = document.getElementById(prefix + 'DonutMain');
   if (ctxMain) {
-    if (ssDonutMainChart) { ssDonutMainChart.destroy(); ssDonutMainChart = null; }
-    ssDonutMainChart = new Chart(ctxMain, {
+    if (store.main) { store.main.destroy(); store.main = null; }
+    store.main = new Chart(ctxMain, {
       type: 'doughnut',
       data: {
         labels: ['À lever', 'À créer sur chantier', 'Levé + À modéliser'],
@@ -260,10 +273,10 @@ function renderSecteursDeSecteur(stats) {
   }
 
   // Donut secondaire : détail Levé / À modéliser (composition du "Levé + À modéliser")
-  const ctxSub = document.getElementById('ssDonutSub');
+  const ctxSub = document.getElementById(prefix + 'DonutSub');
   if (ctxSub) {
-    if (ssDonutSubChart) { ssDonutSubChart.destroy(); ssDonutSubChart = null; }
-    ssDonutSubChart = new Chart(ctxSub, {
+    if (store.sub) { store.sub.destroy(); store.sub = null; }
+    store.sub = new Chart(ctxSub, {
       type: 'doughnut',
       data: {
         labels: ['Levé', 'À modéliser'],
@@ -279,6 +292,11 @@ function renderSecteursDeSecteur(stats) {
       },
     });
   }
+}
+
+function renderSecteursDeSecteur(stats) {
+  // Page 1 du carousel "SECTEURS DE SECTEUR"
+  renderSecteursDeSecteurInto(stats, 'ss');
 }
 // ── Réservations par état (donut simple + légende) ────────────────────────────
 function renderReservationsParEtat(stats) {
@@ -395,7 +413,6 @@ function renderTopoKpis(stats) {
   const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
   const pct = (c) => total > 0 ? (c / total * 100) : 0;
   const fmtPct = (c) => pct(c).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
-  const fmtVol = (v) => (v || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' m²';
 
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const setWidth = (id, w) => { const el = document.getElementById(id); if (el) el.style.width = w + '%'; };
@@ -407,16 +424,33 @@ function renderTopoKpis(stats) {
   setWidth('topoProgressModeliser', fmtPct(aModeliser.count));
 
   setText('topoLeveNum', leve.count.toLocaleString('fr-FR'));
-  setText('topoLeveSub', `${fmtPct(leve.count)} % · ${fmtVol(leve.volume)}`);
+  setText('topoLeveSub', `${fmtPct(leve.count)} %`);
 
   setText('topoALeverNum', aLever.count.toLocaleString('fr-FR'));
-  setText('topoALeverSub', `${fmtPct(aLever.count)} % · ${fmtVol(aLever.volume)}`);
+  setText('topoALeverSub', `${fmtPct(aLever.count)} %`);
 
   setText('topoAModeliserNum', aModeliser.count.toLocaleString('fr-FR'));
-  setText('topoAModeliserSub', `${fmtPct(aModeliser.count)} % · ${fmtVol(aModeliser.volume)}`);
+  setText('topoAModeliserSub', `${fmtPct(aModeliser.count)} %`);
 
   setText('topoACreerNum', aCreer.count.toLocaleString('fr-FR'));
-  setText('topoACreerSub', `${fmtPct(aCreer.count)} % · ${fmtVol(aCreer.volume)}`);
+  setText('topoACreerSub', `${fmtPct(aCreer.count)} %`);
+
+  // ── États sans paramètre dédié pour l'instant ──────────────────────────────
+  // "En attente" reprend la valeur de "À lever" (demandé explicitement).
+  setText('topoEnAttenteNum', aLever.count.toLocaleString('fr-FR'));
+  setText('topoEnAttenteSub', `${fmtPct(aLever.count)} %`);
+
+  // "À confirmer" : pas de paramètre source défini pour l'instant → 0 en attendant.
+  setText('topoAConfirmerNum', '0');
+  setText('topoAConfirmerSub', '0 %');
+
+  // "À venir" : pas de paramètre source pour l'instant → 0 en attendant.
+  setText('topoAVenirNum', '0');
+  setText('topoAVenirSub', '0 %');
+
+  // "Théorique" : pas de paramètre source pour l'instant → 0 en attendant.
+  setText('topoTheoriqueNum', '0');
+  setText('topoTheoriqueSub', '0 %');
 }
 
 // ── Réservations par zone (page 4) ─────────────────────────────────────────────

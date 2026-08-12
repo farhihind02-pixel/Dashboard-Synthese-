@@ -11,6 +11,33 @@ const MSState = {
   etat:        new Set(),
 };
 
+// ── Clignotement rouge des éléments filtrés (Orientation / Type / État) ───────
+// Permet de repérer les éléments sélectionnés même à travers les autres
+// éléments de la maquette (qui sont déjà rendus transparents par le ghosting).
+let blinkInterval = null;
+let blinkOn = false;
+const BLINK_RED_COLOR = new THREE.Vector4(1, 0, 0, 1);
+
+function stopBlink() {
+  if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
+  blinkOn = false;
+}
+
+function startBlink(dbIds, normalColorFn) {
+  stopBlink();
+  if (!viewer || !viewer.model || !dbIds.length) return;
+  blinkOn = false;
+  blinkInterval = setInterval(() => {
+    if (!viewer || !viewer.model) { stopBlink(); return; }
+    blinkOn = !blinkOn;
+    for (const id of dbIds) {
+      const color = blinkOn ? BLINK_RED_COLOR : normalColorFn(id);
+      viewer.setThemingColor(id, color, viewer.model, true);
+    }
+    if (viewer.impl && viewer.impl.invalidate) viewer.impl.invalidate(true, true, true);
+  }, 450);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const { connected } = await fetch('/api/auth/status').then(r=>r.json());
 
@@ -208,15 +235,20 @@ window.onQuickFilter = function() {
   renderZoneDonut(filteredElements);
   renderSurfaceCumulee(filteredElements);
 
-  const etatActive = MSState.etat.size > 0;
-  const blocZoneActive = MSState.bloc.size > 0 || MSState.zone.size > 0;
-  const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||MSState.orientation.size>0||MSState.type.size>0||etatActive;
-  applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive);
+  const etatActive        = MSState.etat.size > 0;
+  const orientationActive = MSState.orientation.size > 0;
+  const typeActive        = MSState.type.size > 0;
+  const blocZoneActive    = MSState.bloc.size > 0 || MSState.zone.size > 0;
+  const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||orientationActive||typeActive||etatActive;
+  // Clignotement rouge demandé uniquement pour les filtres Orientation / Type / État
+  const blinkActive = orientationActive || typeActive || etatActive;
+  applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive, blinkActive);
 };
 
-function applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive) {
+function applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive, blinkActive) {
   if (!viewer || !viewer.model) { console.warn('[Filtre] viewer ou model pas prêt.'); return; }
   if (!hasFilter) {
+    stopBlink();
     viewer.showAll();
     viewer.clearThemingColors(viewer.model);
     viewer.clearSelection();
@@ -236,6 +268,7 @@ function applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActi
   // la maquette (ça ressemble à un bug plutôt qu'à "0 résultat"). On avertit en
   // console et on laisse tout affiché pour que ce soit visible qu'il y a un problème.
   if (filteredArr.length === 0) {
+    stopBlink();
     console.warn('[Filtre] Aucun élément ne correspond au filtre actif — la maquette reste affichée en entier.');
     viewer.showAll();
     viewer.clearThemingColors(viewer.model);
@@ -271,6 +304,20 @@ function applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActi
     }
     coloringApplied = true;
     document.getElementById('btnColor')?.classList.add('active');
+
+    if (blinkActive) {
+      // Clignotement rouge des éléments filtrés (Orientation / Type / État), pour
+      // les repérer même à travers les autres éléments rendus transparents.
+      const elementById = new Map(filteredElements.map(el => [parseInt(el.id), el]));
+      const normalColorFn = (id) => {
+        const el = elementById.get(id);
+        if (!el) return getAPSColor('non_concerne');
+        return etatActive ? getEtatAPSColor(el.resEtat) : getAPSColor(el.statut);
+      };
+      startBlink(filteredArr, normalColorFn);
+    } else {
+      stopBlink();
+    }
 
     if (viewer.impl && viewer.impl.invalidate) {
       viewer.impl.invalidate(true, true, true);
@@ -397,6 +444,7 @@ window.resetQuickFilters = function() {
   renderSurfaceCumulee(AppState.allElements);
 
 if (viewer) {
+    stopBlink();
     viewer.showAll();
     viewer.clearThemingColors(viewer.model);
     viewer.clearSelection();
@@ -434,7 +482,7 @@ window.exportPDF = function() {
 };
 // ── Carousel KPI (État ↔ Type/Orientation ↔ État×Type/État×Orientation) ───────
 let kpiCarouselIndex = 0;
-const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION', 'ÉTAT × TYPE / ORIENTATION', 'ZONES & SURFACES'];
+const KPI_SLIDE_TITLES = ["Bilan de l'état des réservations", 'TYPE & ORIENTATION', 'ÉTAT × TYPE / ORIENTATION', 'ZONES & SURFACES'];
 
 function initKpiCarousel() {
   const track = document.getElementById('kpiCarouselTrack');
@@ -472,3 +520,33 @@ window.kpiCarouselGo = function(direction) {
 };
 
 document.addEventListener('DOMContentLoaded', initKpiCarousel);
+
+// ── Thème sombre pour tout le dashboard ────────────────────────────────────────
+window.toggleDashboardDarkTheme = function() {
+  const isDark = document.body.classList.toggle('dark-theme');
+  localStorage.setItem('dashboardDarkTheme', isDark ? '1' : '0');
+  document.getElementById('btnDashboardDarkTheme')?.classList.toggle('active', isDark);
+  // Redessiner les graphiques Chart.js : leurs couleurs de texte/grille sont fixées
+  // en JS (pas via les variables CSS), donc il faut les régénérer avec le bon thème.
+  if (typeof refreshAllChartsForTheme === 'function') refreshAllChartsForTheme();
+};
+
+(function initDashboardDarkTheme() {
+  if (localStorage.getItem('dashboardDarkTheme') === '1') {
+    document.body.classList.add('dark-theme');
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnDashboardDarkTheme')?.classList.add('active');
+    });
+  }
+})();
+
+// ── Redessiner les graphiques Chart.js avec les bonnes couleurs après un changement de thème ──
+function refreshAllChartsForTheme() {
+  const elements = AppState.filteredElements?.length ? AppState.filteredElements : AppState.allElements;
+  if (!elements || !elements.length) return;
+  if (typeof updateBlocChartData === 'function') updateBlocChartData(elements);
+  if (typeof renderZoneDonut === 'function') renderZoneDonut(elements);
+  if (typeof renderSurfaceCumulee === 'function') renderSurfaceCumulee(elements);
+  if (typeof renderSecteursDeSecteur === 'function') renderSecteursDeSecteur(computeEtatStats(elements));
+  if (typeof renderReservationsParEtat === 'function') renderReservationsParEtat(computeEtatStats(elements));
+}

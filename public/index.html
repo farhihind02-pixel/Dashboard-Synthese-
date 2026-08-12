@@ -60,6 +60,9 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10a7 7 0 0113.3-3H13m3 0V4m-2 13a7 7 0 01-10.3-9"/></svg>
         Réinitialiser
       </button>
+      <button class="btn-reset" onclick="toggleDashboardDarkTheme()" id="btnDashboardDarkTheme" title="Thème sombre">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 10.5A7.5 7.5 0 019.5 3 7.5 7.5 0 1017 10.5z"/></svg>
+      </button>
       <div class="topbar-date">
         <svg viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.8"><path d="M5 3v2H3a1 1 0 00-1 1v11h16V6a1 1 0 00-1-1h-2V3m-8 0h8"/></svg>
         <span id="currentDate"></span>
@@ -126,103 +129,13 @@
     <div class="qf-count" id="qfCount"></div>
   </div>
 
-  <!-- ROW 1: Levées Topo -->
-<section class="topo-kpi-row">
+  <!-- ROW 1+2 : colonne gauche (carousel pleine hauteur) + colonne droite (KPI + Maquette) -->
+<section class="main-grid">
 
-  <div class="topo-card topo-card-main">
-    <div class="topo-card-header">
-      <div class="topo-card-title">LEVÉES TOPO</div>
-      <span class="topo-dot topo-dot-split"></span>
-    </div>
-    <div class="topo-card-num" id="topoLeveesTopoNum">—</div>
-    <div class="topo-card-sub" id="topoLeveesTopoSub">—</div>
-    <div class="topo-progress">
-      <div class="topo-progress-fill topo-progress-leve" id="topoProgressLeve"></div>
-      <div class="topo-progress-fill topo-progress-modeliser" id="topoProgressModeliser"></div>
-    </div>
-  </div>
-
-  <div class="topo-card" style="border-left-color:#22b07d">
-    <div class="topo-card-header">
-      <div class="topo-card-title">LEVÉ</div>
-      <span class="topo-dot" style="background:#22b07d"></span>
-    </div>
-    <div class="topo-card-num" id="topoLeveNum">—</div>
-    <div class="topo-card-sub" id="topoLeveSub">—</div>
-  </div>
-
-  <div class="topo-card" style="border-left-color:#E87722">
-    <div class="topo-card-header">
-      <div class="topo-card-title">À LEVER</div>
-      <span class="topo-dot" style="background:#E87722"></span>
-    </div>
-    <div class="topo-card-num" id="topoALeverNum">—</div>
-    <div class="topo-card-sub" id="topoALeverSub">—</div>
-  </div>
-
-  <div class="topo-card" style="border-left-color:#4A78D9">
-    <div class="topo-card-header">
-      <div class="topo-card-title">À MODÉLISER</div>
-      <span class="topo-dot" style="background:#4A78D9"></span>
-    </div>
-    <div class="topo-card-num" id="topoAModeliserNum">—</div>
-    <div class="topo-card-sub" id="topoAModeliserSub">—</div>
-  </div>
-
-  <div class="topo-card" style="border-left-color:#D93077">
-    <div class="topo-card-header">
-      <div class="topo-card-title">À CRÉER SUR CHANTIER</div>
-      <span class="topo-dot" style="background:#D93077"></span>
-    </div>
-    <div class="topo-card-num" id="topoACreerNum">—</div>
-    <div class="topo-card-sub" id="topoACreerSub">—</div>
-  </div>
-
-</section>
-
-<section class="topo-desc-row">
-
-  <div class="topo-desc-card" style="border-left-color:#22b07d">
-    <div class="topo-desc-header">
-      <span class="topo-dot" style="background:#22b07d"></span>
-      <span class="topo-desc-title">Levé</span>
-    </div>
-    <div class="topo-desc-text">Présente dans la maquette et confirmée sur chantier par le levé Topo.</div>
-  </div>
-
-  <div class="topo-desc-card" style="border-left-color:#E87722">
-    <div class="topo-desc-header">
-      <span class="topo-dot" style="background:#E87722"></span>
-      <span class="topo-desc-title">À lever</span>
-    </div>
-    <div class="topo-desc-text">Contrôle Topo à réaliser.</div>
-  </div>
-
-  <div class="topo-desc-card" style="border-left-color:#4A78D9">
-    <div class="topo-desc-header">
-      <span class="topo-dot" style="background:#4A78D9"></span>
-      <span class="topo-desc-title">À modéliser</span>
-    </div>
-    <div class="topo-desc-text">Présente sur chantier et relevée par le Topo, mais absente de la maquette.</div>
-  </div>
-
-  <div class="topo-desc-card" style="border-left-color:#D93077">
-    <div class="topo-desc-header">
-      <span class="topo-dot" style="background:#D93077"></span>
-      <span class="topo-desc-title">À créer sur chantier</span>
-    </div>
-    <div class="topo-desc-text">Présente dans la maquette mais non constatée sur chantier. Confirmation BET / Synthèse en attente.</div>
-  </div>
-
-</section>
-
-  <!-- ROW 2: Table + Maquette -->
-  <section class="bottom-row">
-
-  <!-- Secteurs de secteur (carousel 2 pages) -->
+  <!-- Secteurs de secteur (carousel, pleine hauteur) -->
   <div class="panel bottom-left">
     <div class="panel-header-row">
-      <div class="panel-title-sm" id="kpiCarouselTitle">SECTEURS DE SECTEUR</div>
+      <div class="panel-title-sm" id="kpiCarouselTitle">Bilan de l'état des réservations</div>
       <div class="kpi-carousel-nav">
         <button class="kpi-nav-btn" id="kpiPrevBtn" onclick="kpiCarouselGo(-1)" title="Précédent">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
@@ -246,7 +159,7 @@
           <div class="ss-sub">Lecture synthétique des réservations à lever, levées, à modéliser et à créer sur chantier.</div>
 
           <div class="ss-callout" id="ssCallout">
-            <span class="ss-callout-label">Levé + À modéliser</span>
+            <span class="ss-callout-label">Levées topo</span>
             <span class="ss-callout-pct" id="ssCalloutPct">—</span>
             <span class="ss-callout-count" id="ssCalloutCount">—</span>
           </div>
@@ -441,6 +354,98 @@
     </div>
   </div>
 
+  <!-- Colonne droite : grille KPI (haut) + Maquette 3D (bas, flex-1) -->
+  <div class="main-grid-right">
+
+    <div class="topo-kpi-row">
+
+      <div class="topo-card topo-card-wide" style="border-left-color:#22b07d">
+        <div class="topo-card-header">
+          <div class="topo-card-title">LEVÉES TOPO</div>
+          <span class="topo-dot" style="background:#22b07d"></span>
+        </div>
+        <div class="topo-card-num" id="topoLeveesTopoNum">—</div>
+        <div class="topo-card-sub" id="topoLeveesTopoSub">—</div>
+        <div class="topo-progress">
+          <div class="topo-progress-fill topo-progress-leve" id="topoProgressLeve"></div>
+          <div class="topo-progress-fill topo-progress-modeliser" id="topoProgressModeliser"></div>
+        </div>
+      </div>
+
+      <div class="topo-card topo-card-wide" style="border-left-color:#E87722">
+        <div class="topo-card-header">
+          <div class="topo-card-title">À LEVER</div>
+          <span class="topo-dot" style="background:#E87722"></span>
+        </div>
+        <div class="topo-card-num" id="topoALeverNum">—</div>
+        <div class="topo-card-sub" id="topoALeverSub">—</div>
+      </div>
+
+      <div class="topo-card topo-card-wide" style="border-left-color:#D93077">
+        <div class="topo-card-header">
+          <div class="topo-card-title">À CONFIRMER</div>
+          <span class="topo-dot" style="background:#D93077"></span>
+        </div>
+        <div class="topo-card-num" id="topoAConfirmerNum">—</div>
+        <div class="topo-card-sub" id="topoAConfirmerSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#22b07d">
+        <div class="topo-card-header">
+          <div class="topo-card-title">LEVÉ</div>
+          <span class="topo-dot" style="background:#22b07d"></span>
+        </div>
+        <div class="topo-card-num" id="topoLeveNum">—</div>
+        <div class="topo-card-sub" id="topoLeveSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#4A78D9">
+        <div class="topo-card-header">
+          <div class="topo-card-title">À MODÉLISER</div>
+          <span class="topo-dot" style="background:#4A78D9"></span>
+        </div>
+        <div class="topo-card-num" id="topoAModeliserNum">—</div>
+        <div class="topo-card-sub" id="topoAModeliserSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#E8B800">
+        <div class="topo-card-header">
+          <div class="topo-card-title">EN ATTENTE</div>
+          <span class="topo-dot" style="background:#E8B800"></span>
+        </div>
+        <div class="topo-card-num" id="topoEnAttenteNum">—</div>
+        <div class="topo-card-sub" id="topoEnAttenteSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#8B5E3C">
+        <div class="topo-card-header">
+          <div class="topo-card-title">À VENIR</div>
+          <span class="topo-dot" style="background:#8B5E3C"></span>
+        </div>
+        <div class="topo-card-num" id="topoAVenirNum">—</div>
+        <div class="topo-card-sub" id="topoAVenirSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#D93077">
+        <div class="topo-card-header">
+          <div class="topo-card-title">À CRÉER</div>
+          <span class="topo-dot" style="background:#D93077"></span>
+        </div>
+        <div class="topo-card-num" id="topoACreerNum">—</div>
+        <div class="topo-card-sub" id="topoACreerSub">—</div>
+      </div>
+
+      <div class="topo-card" style="border-left-color:#9B59B6">
+        <div class="topo-card-header">
+          <div class="topo-card-title">THÉORIQUE</div>
+          <span class="topo-dot" style="background:#9B59B6"></span>
+        </div>
+        <div class="topo-card-num" id="topoTheoriqueNum">—</div>
+        <div class="topo-card-sub" id="topoTheoriqueSub">—</div>
+      </div>
+
+    </div>
+
   <!-- Viewer 3D -->
     <div class="panel bottom-right viewer-panel">
       <div class="panel-header-row">
@@ -477,6 +482,8 @@
         <div class="detail-body" id="detailBody"></div>
       </div>
     </div>
+
+  </div>
 
   </section>
 
