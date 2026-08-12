@@ -4,11 +4,11 @@
 
 // État des sélections multi
 const MSState = {
-  bloc:     new Set(),
-  zone:     new Set(),
-  niveau:   new Set(),
-  grue:     new Set(),
-  statut:   '',
+  bloc:        new Set(),
+  zone:        new Set(),
+  orientation: new Set(),
+  type:        new Set(),
+  etat:        new Set(),
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initCharts(AppState.stats);
     AppState.filteredElements = [...AppState.allElements];
     updateActivityBars(AppState.allElements);
+    renderEtatKpis(computeEtatStats(AppState.allElements));
+    renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
+    renderReservationsParEtat(computeEtatStats(AppState.allElements));
+    renderTypeOrientation(AppState.allElements);
     initMultiSelects(AppState.stats);
   }
 
@@ -53,12 +57,17 @@ window.onViewerReady = async function(viewerInst) {
   initCharts(AppState.stats);
   AppState.filteredElements = [...AppState.allElements];
   updateActivityBars(AppState.allElements);
+  renderEtatKpis(computeEtatStats(AppState.allElements));
+  renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
+  renderReservationsParEtat(computeEtatStats(AppState.allElements));
+  renderTypeOrientation(AppState.allElements);
   // Vider et reconstruire les dropdowns avec les vraies données du viewer
-  ['msBlocDrop','msZoneDrop','msNiveauDrop','msGrueDrop'].forEach(id => {
+  ['msBlocDrop','msZoneDrop','msOrientationDrop','msTypeDrop','msEtatDrop'].forEach(id => {
     const drop = document.getElementById(id);
     if (drop) drop.innerHTML = '';
   });
-  MSState.bloc.clear(); MSState.zone.clear(); MSState.niveau.clear(); MSState.grue.clear();
+  MSState.bloc.clear(); MSState.zone.clear(); MSState.orientation.clear();
+  MSState.type.clear(); MSState.etat.clear();
   initMultiSelects(AppState.stats);
 };
 
@@ -137,32 +146,29 @@ function initMultiSelects(stats) {
 });
   buildMultiSelect('msZone','msZoneDrop','msZoneBadge', zones, z=>z, 'zone');
 
-  // Niveaux (ME_ELEMENT SUB ZONE) — uniquement LT, MT, UT, dans cet ordre, avec libellés en français
-  const NIVEAU_ORDER = ['LT', 'MT', 'UT'];
-  const NIVEAU_LABELS = { LT: 'INF', MT: 'INT', UT: 'SUP' };
-  const niveaux = NIVEAU_ORDER.filter(n => stats.byNiveau[n]);
-  buildMultiSelect('msNiveau','msNiveauDrop','msNiveauBadge', niveaux, n => NIVEAU_LABELS[n] || n, 'niveau');
+  // Orientation (Res_Orientation) — remplace l'ancien filtre Niveau
+  const orientations = [...new Set(AppState.allElements.map(e => e.orientation).filter(Boolean))].sort();
+  buildMultiSelect('msOrientation','msOrientationDrop','msOrientationBadge', orientations, o=>o, 'orientation');
 
-  // Grue (Commentaires) — XCMG ou Grue à tour (clé interne GRUE_TOUR sans accent, libellé affiché avec accent)
-  const GRUE_ORDER  = ['XCMG', 'GRUE_TOUR'];
-  const GRUE_LABELS = { XCMG: 'XCMG', GRUE_TOUR: 'Grue à tour' };
-  const grues = GRUE_ORDER.filter(g => stats.byGrue[g]);
-  buildMultiSelect('msGrue','msGrueDrop','msGrueBadge', grues, g => GRUE_LABELS[g] || g, 'grue');
+  // Type (Res_Famille)
+  const types = [...new Set(AppState.allElements.map(e => e.resFamille).filter(Boolean))].sort();
+  buildMultiSelect('msType','msTypeDrop','msTypeBadge', types, t=>t, 'type');
+
+  // État (Res_État)
+  const etats = [...new Set(AppState.allElements.map(e => e.resEtat).filter(Boolean))].sort();
+  buildMultiSelect('msEtat','msEtatDrop','msEtatBadge', etats, e=>e, 'etat');
 
   updateQfCount(AppState.allLevees.length, AppState.allLevees.length);
 }
 
 // ── Filtre principal ──────────────────────────────────────────────────────────
 window.onQuickFilter = function() {
-  const statut = document.getElementById('filterStatut')?.value || '';
-  document.getElementById('filterStatut')?.classList.toggle('has-value', statut!=='');
-
   const filteredLevees = AppState.allLevees.filter(l => {
-    if (MSState.bloc.size>0     && !MSState.bloc.has(l.bloc))                return false;
-    if (MSState.zone.size>0     && !MSState.zone.has(l.zone))                return false;
-    if (MSState.niveau.size>0   && !MSState.niveau.has(l.niveau))            return false;
-    if (MSState.grue.size>0     && !MSState.grue.has(l.grue))                return false;
-    if (statut && l.statut !== statut)                                        return false;
+    if (MSState.bloc.size>0        && !MSState.bloc.has(l.bloc))                              return false;
+    if (MSState.zone.size>0        && !MSState.zone.has(l.zone))                              return false;
+    if (MSState.orientation.size>0 && !MSState.orientation.has(l.orientation))                return false;
+    if (MSState.type.size>0        && !(l.resFamilles || []).some(f => MSState.type.has(f)))  return false;
+    if (MSState.etat.size>0        && !(l.resEtats || []).some(e => MSState.etat.has(e)))     return false;
     return true;
   });
 
@@ -175,74 +181,161 @@ window.onQuickFilter = function() {
 
   // Éléments pour le viewer
   const filteredElements = AppState.allElements.filter(el => {
-    if (MSState.bloc.size>0     && !MSState.bloc.has(el.bloc))               return false;
-    if (MSState.zone.size>0     && !MSState.zone.has(el.zone))               return false;
-    if (MSState.niveau.size>0   && !MSState.niveau.has(el.niveau))           return false;
-    if (MSState.grue.size>0     && !MSState.grue.has(el.grue))               return false;
-    if (statut && el.statut !== statut)                                        return false;
-    return true;
-  });
-
-  // Même filtrage MAIS sans le critère Grue, pour que le % Avancement Global
-  // ne soit jamais affecté par ce filtre spécifique
-  const filteredElementsNoGrue = AppState.allElements.filter(el => {
-    if (MSState.bloc.size>0     && !MSState.bloc.has(el.bloc))               return false;
-    if (MSState.zone.size>0     && !MSState.zone.has(el.zone))               return false;
-    if (MSState.niveau.size>0   && !MSState.niveau.has(el.niveau))           return false;
-    if (statut && el.statut !== statut)                                        return false;
+    if (MSState.bloc.size>0        && !MSState.bloc.has(el.bloc))               return false;
+    if (MSState.zone.size>0        && !MSState.zone.has(el.zone))               return false;
+    if (MSState.orientation.size>0 && !MSState.orientation.has(el.orientation)) return false;
+    if (MSState.type.size>0        && !MSState.type.has(el.resFamille))         return false;
+    if (MSState.etat.size>0        && !MSState.etat.has(el.resEtat))            return false;
     return true;
   });
 
   AppState.filteredElements = filteredElements;
-  updateActivityBars(filteredElements, filteredElementsNoGrue);
+  updateActivityBars(filteredElements, filteredElements);
+  renderEtatKpis(computeEtatStats(filteredElements));
+  renderSecteursDeSecteur(computeEtatStats(filteredElements));
+  renderReservationsParEtat(computeEtatStats(filteredElements));
+  renderTypeOrientation(filteredElements);
 
-  const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||MSState.niveau.size>0||MSState.grue.size>0||!!statut;
-  applyViewerFilter(filteredElements, hasFilter);
+  const etatActive = MSState.etat.size > 0;
+  const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||MSState.orientation.size>0||MSState.type.size>0||etatActive;
+  applyViewerFilter(filteredElements, hasFilter, etatActive);
 };
 
-function applyViewerFilter(filteredElements, hasFilter) {
-  if (!viewer || !viewer.model) return;
-
-  // Toujours afficher tous les éléments
-  viewer.showAll();
-  viewer.clearThemingColors(viewer.model);
-  viewer.clearSelection();
-
+function applyViewerFilter(filteredElements, hasFilter, etatActive) {
+  if (!viewer || !viewer.model) { console.warn('[Filtre] viewer ou model pas prêt.'); return; }
   if (!hasFilter) {
+    viewer.showAll();
+    viewer.clearThemingColors(viewer.model);
+    viewer.clearSelection();
     coloringApplied = false;
     document.getElementById('btnColor')?.classList.remove('active');
     return;
   }
 
   const filteredSet = new Set(filteredElements.map(el => parseInt(el.id)).filter(n => !isNaN(n)));
-  const allIds = AppState.allElements.map(el => parseInt(el.id)).filter(n => !isNaN(n));
+  const allIds     = AppState.allElements.map(el => parseInt(el.id)).filter(n => !isNaN(n));
+  const hiddenIds  = allIds.filter(id => !filteredSet.has(id));
   const filteredArr = [...filteredSet];
 
-// Éléments NON sélectionnés → encore plus transparents
-const ghostColor = new THREE.Vector4(0.4, 0.4, 0.4, 0.02); // 0.05 → 0.02
-  allIds.forEach(id => {
-    if (!filteredSet.has(id)) {
-      viewer.setThemingColor(id, ghostColor, viewer.model, true);
-    }
-  });
+  console.log(`[Filtre] ${filteredArr.length} élément(s) filtré(s) / ${allIds.length} au total (${hiddenIds.length} rendus transparents).`);
 
-// Éléments sélectionnés → orange vif au lieu de la couleur statut
-for (const el of filteredElements) {
-  const id = parseInt(el.id);
-  if (!isNaN(id)) {
-    viewer.setThemingColor(id, new THREE.Vector4(0.91, 0.47, 0.13, 1.0), viewer.model, true);
+  // Sécurité : si le filtre ne matche AUCUN élément, ne pas vider silencieusement
+  // la maquette (ça ressemble à un bug plutôt qu'à "0 résultat"). On avertit en
+  // console et on laisse tout affiché pour que ce soit visible qu'il y a un problème.
+  if (filteredArr.length === 0) {
+    console.warn('[Filtre] Aucun élément ne correspond au filtre actif — la maquette reste affichée en entier.');
+    viewer.showAll();
+    viewer.clearThemingColors(viewer.model);
+    return;
+  }
+
+  try {
+    // NE PAS utiliser isolate()/hide() : sur ce modèle volumineux (streaming HLOD),
+    // ces méthodes désynchronisent le rendu et vident la maquette. À la place, on
+    // garde TOUT chargé/visible et on rend les éléments non filtrés quasi transparents
+    // (ghosting via couleur override + alpha) — ça ne touche jamais le streaming de
+    // géométrie, donc c'est fiable même sur un gros modèle.
+    viewer.showAll();
+    viewer.clearThemingColors(viewer.model);
+
+    const GHOST_COLOR = new THREE.Vector4(0.4, 0.4, 0.4, 0.02);
+    // false = respecter le canal alpha de la couleur → transparence réellement appliquée
+    hiddenIds.forEach(id => viewer.setThemingColor(id, GHOST_COLOR, viewer.model, true));
+
+    for (const el of filteredElements) {
+      const id = parseInt(el.id);
+      if (!isNaN(id)) {
+        const color = etatActive ? getEtatAPSColor(el.resEtat) : getAPSColor(el.statut);
+        viewer.setThemingColor(id, color, viewer.model, true);
+      }
+    }
+    coloringApplied = true;
+    document.getElementById('btnColor')?.classList.add('active');
+
+    if (viewer.impl && viewer.impl.invalidate) {
+      viewer.impl.invalidate(true, true, true);
+    }
+  } catch (err) {
+    console.error('[Filtre] Erreur pendant le ghosting/coloration :', err);
+  }
+
+// Zoome sur un ensemble de dbIds en ignorant les ~15% les plus isolés (outliers),
+// pour éviter que quelques éléments dispersés loin du groupe empêchent tout
+// cadrage serré (sinon fitToView() doit englober tout le monde, même les 2-3
+// éléments perdus à l'autre bout du bâtiment).
+function fitToViewTrimmed(dbIds, trimRatio = 0.15) {
+  if (!viewer || !viewer.model || !dbIds.length) return;
+  try {
+    const it = viewer.model.getData().instanceTree;
+    if (!it) { viewer.fitToView(dbIds); return; }
+
+    const box6 = new Float32Array(6);
+    const boxes = [];
+    for (const id of dbIds) {
+      try {
+        it.getNodeBox(id, box6);
+        const min = new THREE.Vector3(box6[0], box6[1], box6[2]);
+        const max = new THREE.Vector3(box6[3], box6[4], box6[5]);
+        boxes.push({ min, max, center: min.clone().add(max).multiplyScalar(0.5) });
+      } catch (e) { /* dbId sans géométrie, on ignore */ }
+    }
+    if (!boxes.length) { viewer.fitToView(dbIds); return; }
+
+    // Centroïde de tous les centres
+    const centroid = boxes.reduce((acc, b) => acc.add(b.center), new THREE.Vector3())
+      .multiplyScalar(1 / boxes.length);
+
+    // Trier par distance au centroïde, garder les plus proches (retire les outliers)
+    const sorted = boxes
+      .map(b => ({ b, d: b.center.distanceTo(centroid) }))
+      .sort((a, b) => a.d - b.d);
+    const keepCount = Math.max(1, Math.ceil(sorted.length * (1 - trimRatio)));
+    const kept = sorted.slice(0, keepCount).map(x => x.b);
+
+    const box = new THREE.Box3();
+    kept.forEach(b => box.union(new THREE.Box3(b.min, b.max)));
+
+    const center = box.getCenter(new THREE.Vector3());
+    const size   = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 1);
+    const dist   = maxDim * 1.6;
+
+    const eye = new THREE.Vector3(center.x + dist, center.y - dist, center.z + dist * 0.8);
+    if (viewer.navigation && viewer.navigation.setView) {
+      viewer.navigation.setRequestTransition(true);
+      viewer.navigation.setView(eye, center);
+    } else {
+      viewer.fitToView(dbIds);
+    }
+    console.log(`[Filtre] Zoom resserré sur ${kept.length}/${boxes.length} élément(s) (${Math.round(trimRatio*100)}% d'outliers ignorés).`);
+  } catch (err) {
+    console.error('[Filtre] Erreur fitToViewTrimmed, fallback sur fitToView normal :', err);
+    try { viewer.fitToView(dbIds); } catch (e2) {}
   }
 }
-  coloringApplied = true;
-  document.getElementById('btnColor')?.classList.add('active');
 
-  // Surbrillance supplémentaire via sélection APS
-  viewer.select(filteredArr);
-
-  // Zoomer sur les éléments filtrés
-  if (filteredArr.length > 0) {
-    setTimeout(() => viewer.fitToView(filteredArr), 200);
+  // Sélectionner (contour) + zoomer/cadrer sur les éléments filtrés
+  try {
+    viewer.select(filteredArr);
+  } catch (err) {
+    console.error('[Filtre] Erreur viewer.select :', err);
   }
+  if (filteredArr.length > 0) {
+    setTimeout(() => fitToViewTrimmed(filteredArr), 250);
+  }
+}
+
+// ── Cartes KPI État (Res_État) ──────────────────────────────────────────────
+function renderEtatKpis(stats) {
+  if (!stats) return;
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const fmt = n => (n || 0).toLocaleString('fr-FR');
+
+  setText('etatTotalNum',      fmt(stats.total.count));
+  setText('etatLeveNum',       fmt(stats.leve.count));
+  setText('etatALeverNum',     fmt(stats.aLever.count));
+  setText('etatAModeliserNum', fmt(stats.aModeliser.count));
+  setText('etatACreerNum',     fmt(stats.aCreer.count));
 }
 
 function updateQfCount(filtered, total) {
@@ -256,7 +349,7 @@ function updateQfCount(filtered, total) {
 }
 
 window.resetQuickFilters = function() {
-  ['bloc','zone','niveau','grue'].forEach(key => {
+  ['bloc','zone','orientation','type','etat'].forEach(key => {
     MSState[key].clear();
     const dropId = `ms${key.charAt(0).toUpperCase()+key.slice(1)}Drop`;
     const drop = document.getElementById(dropId);
@@ -269,15 +362,15 @@ window.resetQuickFilters = function() {
     updateBadge(badgeId, wrapperId, 0);
   });
 
-  const statSel = document.getElementById('filterStatut');
-  if (statSel) { statSel.value=''; statSel.classList.remove('has-value'); }
-  MSState.statut = '';
-
   AppState.filteredStats  = AppState.stats;
   AppState.filteredLevees = [...AppState.allLevees];
   updateQfCount(AppState.allLevees.length, AppState.allLevees.length);
   AppState.filteredElements = [...AppState.allElements];
   updateActivityBars(AppState.allElements);
+  renderEtatKpis(computeEtatStats(AppState.allElements));
+  renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
+  renderReservationsParEtat(computeEtatStats(AppState.allElements));
+  renderTypeOrientation(AppState.allElements);
 
 if (viewer) {
     viewer.showAll();
@@ -306,12 +399,6 @@ window.onBlocClick = function(bloc) {
   onQuickFilter();
 };
 
-window.onStatutClick = function(statut) {
-  const sel = document.getElementById('filterStatut');
-  if (sel) { sel.value=statut; sel.classList.add('has-value'); }
-  onQuickFilter();
-};
-
 window.resetFilters = function() {
   window.resetQuickFilters();
   closeDetail();
@@ -320,4 +407,22 @@ window.resetFilters = function() {
 window.exportPDF = function() {
   document.title = `BIM Dashboard SGTM — ${new Date().toLocaleDateString('fr-FR')}`;
   window.print();
+};
+// ── Carousel KPI (page État ↔ page Type/Orientation) ──────────────────────────
+let kpiCarouselIndex = 0;
+const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION'];
+
+window.kpiCarouselGo = function(direction) {
+  const track = document.getElementById('kpiCarouselTrack');
+  if (!track) return;
+  const slideCount = track.children.length;
+  kpiCarouselIndex = (kpiCarouselIndex + direction + slideCount) % slideCount;
+  track.style.transform = `translateX(-${kpiCarouselIndex * (100 / slideCount)}%)`;
+
+  const title = document.getElementById('kpiCarouselTitle');
+  if (title) title.textContent = KPI_SLIDE_TITLES[kpiCarouselIndex] || '';
+
+  document.querySelectorAll('#kpiNavDots .kpi-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === kpiCarouselIndex);
+  });
 };

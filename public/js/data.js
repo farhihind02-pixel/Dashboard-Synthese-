@@ -48,17 +48,16 @@ async function loadDataFromViewer(viewer) {
       null,
       {
         propFilter: [
-          'ID_TOPO',
-          'TOPO_TYPE_SUPPORT',
-          'TOPO_BLOC',
-          'TOPO BLOC',
-          'BLOC',
-          'ZONE',
-          'ME_ELEMENT LEVEL', 'ME_ELEMENT SUB ZONE',
+          'BLOC', 'Bloc', 'Res_Bloc', 'RES_BLOC',
+          'ZONE', 'Zone', 'ME_ELEMENT ZONE', 'Res_Zone', 'RES_ZONE',
+          'ME_ELEMENT LEVEL',
           'ME_ELEMENT TYPE',
           'Phase 1', 'RESTE', 'Coulé 1', 'Coulé 2',
           'BB FERR', 'BB COULAGE', 'BB POSE',
           'Volume', 'Inaccessible',
+          'Res_État', 'Res_Etat', 'RES_ÉTAT', 'RES_ETAT', 'res_état', 'res_etat',
+          'Res_Famille', 'RES_FAMILLE', 'res_famille',
+          'Res_Orientation', 'RES_ORIENTATION', 'res_orientation',
         ],
       },
       (results) => {
@@ -98,6 +97,42 @@ async function loadDataFromViewer(viewer) {
         }
         console.log('[Data] Distribution elementType:', typeCounts);
 
+        // Debug : distribution Res_État (pour diagnostiquer le filtre État)
+        const etatCounts = {};
+        for (const e of AppState.allElements) {
+          const v = e.resEtat || '(vide/non trouvé)';
+          etatCounts[v] = (etatCounts[v]||0) + 1;
+        }
+        console.log('[Data] Distribution resEtat:', etatCounts);
+
+        // Diagnostic global : si BLOC, ZONE ou Res_Orientation sont vides pour TOUS les
+        // éléments, le nom de propriété ne correspond pas à ce que le viewer connaît
+        // (propFilter restreint déjà la réponse, donc on ne peut pas le voir depuis
+        // "results"). On fait un appel SANS filtre pour lister toutes les vraies
+        // propriétés et retrouver les bons noms.
+        // IMPORTANT : on ne prend PAS results[0] au hasard — ça peut être une feuille
+        // (Sheet) Revit sans aucun rapport avec les éléments 3D du modèle. On cible un
+        // élément dont on SAIT que c'est un vrai élément BIM (il a un Res_État valide).
+        const blocVide        = sansBloc === AppState.allElements.length;
+        const zoneVide        = sansZone === AppState.allElements.length;
+        const orientationVide = AppState.allElements.every(e => !e.orientation);
+        if (blocVide || zoneVide || orientationVide) {
+          const sampleEl = results.find(r => {
+            const el = AppState.dbIdMap.get(r.dbId);
+            return el && el.resEtat;
+          }) || results[0];
+          if (sampleEl) {
+            viewer.model.getProperties(sampleEl.dbId, (fullProps) => {
+              const allNames = (fullProps.properties || []).map(p => p.displayName);
+              console.log('[Data] ⚠️ BLOC/ZONE/Orientation introuvables (au moins un des trois est vide pour tous les éléments).');
+              console.log('[Data] ⚠️ Toutes les propriétés d\'un VRAI élément BIM (dbId', sampleEl.dbId, ') :', allNames);
+              if (blocVide)        console.log('[Data] ⚠️ Suspects pour BLOC :',        allNames.filter(n => /bloc/i.test(n)));
+              if (zoneVide)        console.log('[Data] ⚠️ Suspects pour ZONE :',        allNames.filter(n => /zone/i.test(n)));
+              if (orientationVide) console.log('[Data] ⚠️ Suspects pour Orientation :', allNames.filter(n => /orient/i.test(n)));
+            }, (err) => console.warn('[Data] Erreur getProperties diagnostic:', err));
+          }
+        }
+
         AppState.allLevees      = buildLeveesFromElements(AppState.allElements);
         AppState.filteredLevees = [...AppState.allLevees];
         AppState.stats          = computeStats(AppState.allLevees);
@@ -124,7 +159,6 @@ function normalizeElementFromViewer(raw) {
     }
     return null;
   };
-  const idTopo = get('ID_TOPO') || get('id_topo') || null;
 
   const phase1 = get('Phase 1', 'phase 1');
   const reste  = get('RESTE');
@@ -141,24 +175,35 @@ function normalizeElementFromViewer(raw) {
   // ME_ELEMENT TYPE — ex: 'GD', 'MS', 'VO', etc.
   const elementTypeRaw = get('ME_ELEMENT TYPE', 'me_element type');
   const elementType    = elementTypeRaw ? String(elementTypeRaw).trim().toUpperCase() : null;
-  const topoType       = get('TOPO_TYPE_SUPPORT') ? String(get('TOPO_TYPE_SUPPORT')).trim() : null;
+
+  // Res_État — paramètre Revit dédié (distinct de l'avancement Phase1/Coulé/Reste ci-dessus)
+  const resEtatRaw = get('Res_État', 'Res_Etat', 'RES_ÉTAT', 'RES_ETAT');
+  const resEtat     = resEtatRaw ? String(resEtatRaw).trim() : null;
+
+  // Res_Famille — utilisé pour le filtre "Type"
+  const resFamilleRaw = get('Res_Famille', 'RES_FAMILLE', 'res_famille');
+  const resFamille     = resFamilleRaw ? String(resFamilleRaw).trim() : null;
+
+  // Res_Orientation — utilisé pour le filtre "Orientation" (remplace l'ancien filtre Niveau)
+  const orientationRaw = get('Res_Orientation', 'RES_ORIENTATION', 'res_orientation');
+  const orientation     = orientationRaw ? String(orientationRaw).trim() : null;
 
   return {
     id:          String(raw.dbId),
     expressId:   raw.dbId,
     elementType,                              // ← ME_ELEMENT TYPE (ex: 'GD')
-    bloc:        get('TOPO_BLOC') ? String(get('TOPO_BLOC')).trim() : get('TOPO BLOC') ? String(get('TOPO BLOC')).trim() : get('BLOC') ? String(get('BLOC')).trim() : null,
-    zone:        topoType || (get('ZONE') ? String(get('ZONE')).trim() : null),
+    bloc:        get('Res_Bloc', 'BLOC', 'Bloc', 'RES_BLOC') ? String(get('Res_Bloc', 'BLOC', 'Bloc', 'RES_BLOC')).trim() : null,
+    zone:        get('ME_ELEMENT ZONE', 'ZONE', 'Zone', 'Res_Zone', 'RES_ZONE') ? String(get('ME_ELEMENT ZONE', 'ZONE', 'Zone', 'Res_Zone', 'RES_ZONE')).trim() : null,
     level:       get('ME_ELEMENT LEVEL') ? String(get('ME_ELEMENT LEVEL')).trim() : null,
-    niveau:      get('ME_ELEMENT SUB ZONE') ? String(get('ME_ELEMENT SUB ZONE')).trim() : null,
+    orientation,                               // ← Res_Orientation
+    resFamille,                                // ← Res_Famille (filtre Type)
     grue:        toBBFlag(get('Inaccessible')) === 1 ? 'XCMG' : 'GRUE_TOUR',
     ferr:        toBBFlag(get('BB FERR', 'BB_FERR')),
     coul:        toBBFlag(get('BB COULAGE', 'BB_COULAGE')),
     pose:        toBBFlag(get('BB POSE', 'BB_POSE')),
     volume:      parseVolumeValue(get('Volume')),
-    idTopo: idTopo ? String(idTopo).trim() : null,
     statut,
-    
+    resEtat,
   };
 }
 
@@ -181,18 +226,22 @@ function buildLeveesFromElements(elements) {
   for (const el of elements) {
     const level = el.level || 'L?';
     const key   = `${el.bloc}|${el.zone}|${level}`;
-    if (!dict[key]) dict[key] = { key, bloc: el.bloc, zone: el.zone, niveau: el.niveau, grue: el.grue, level, statuts: [], nb_elements: 0 };
+    if (!dict[key]) dict[key] = { key, bloc: el.bloc, zone: el.zone, orientation: el.orientation, grue: el.grue, level, statuts: [], resEtats: [], resFamilles: [], nb_elements: 0 };
     dict[key].statuts.push(el.statut);
+    if (el.resEtat)    dict[key].resEtats.push(el.resEtat);
+    if (el.resFamille) dict[key].resFamilles.push(el.resFamille);
     dict[key].nb_elements++;
   }
   return Object.values(dict).map(d => ({
     key:         d.key,
     bloc:        d.bloc,
     zone:        d.zone,
-    niveau:      d.niveau,
+    orientation: d.orientation,
     grue:        d.grue,
     level:       d.level,
     statut:      leveeStatus(d.statuts),
+    resEtats:    [...new Set(d.resEtats)],
+    resFamilles: [...new Set(d.resFamilles)],
     nb_elements: d.nb_elements,
   }));
 }
@@ -212,7 +261,7 @@ function computeStats(levees) {
   const byStatut = { realise:0, en_cours:0, non_realise:0, non_concerne:0 };
   const byBloc   = {};
   const byZone   = {};
-  const byNiveau = {};
+  const byOrientation = {};
   const byGrue   = {};
 
   for (const l of levees) {
@@ -227,10 +276,10 @@ function computeStats(levees) {
       byZone[l.zone].total++;
       byZone[l.zone][l.statut] = (byZone[l.zone][l.statut]||0) + 1;
     }
-    if (l.niveau) {
-      if (!byNiveau[l.niveau]) byNiveau[l.niveau] = { total:0, realise:0, en_cours:0, non_realise:0, non_concerne:0 };
-      byNiveau[l.niveau].total++;
-      byNiveau[l.niveau][l.statut] = (byNiveau[l.niveau][l.statut]||0) + 1;
+    if (l.orientation) {
+      if (!byOrientation[l.orientation]) byOrientation[l.orientation] = { total:0, realise:0, en_cours:0, non_realise:0, non_concerne:0 };
+      byOrientation[l.orientation].total++;
+      byOrientation[l.orientation][l.statut] = (byOrientation[l.orientation][l.statut]||0) + 1;
     }
     if (l.grue) {
       if (!byGrue[l.grue]) byGrue[l.grue] = { total:0, realise:0, en_cours:0, non_realise:0, non_concerne:0 };
@@ -240,7 +289,7 @@ function computeStats(levees) {
   }
 
   return {
-    total, byStatut, byBloc, byZone, byNiveau, byGrue,
+    total, byStatut, byBloc, byZone, byOrientation, byGrue,
     pctGlobal: total > 0 ? Math.round((byStatut.realise / total) * 100) : 0,
   };
 }
@@ -248,11 +297,13 @@ function computeStats(levees) {
 function applyFilter(type, value) {
   AppState.activeFilter = { type, value };
   const filtered = AppState.allLevees.filter(l => {
-    if (type === 'bloc')   return l.bloc === value;
-    if (type === 'zone')   return l.zone === value;
-    if (type === 'niveau') return l.niveau === value;
-    if (type === 'grue')   return l.grue === value;
-    if (type === 'statut') return l.statut === value;
+    if (type === 'bloc')        return l.bloc === value;
+    if (type === 'zone')        return l.zone === value;
+    if (type === 'orientation') return l.orientation === value;
+    if (type === 'grue')        return l.grue === value;
+    if (type === 'statut')      return l.statut === value;
+    if (type === 'type')        return (l.resFamilles || []).includes(value);
+    if (type === 'etat')        return (l.resEtats || []).includes(value);
     return true;
   });
   AppState.filteredLevees = filtered;
@@ -275,11 +326,13 @@ function clearFilter() {
 function getDbIdsForFilter(type, value) {
   return AppState.allElements
     .filter(el => {
-      if (type === 'bloc')   return el.bloc === value;
-      if (type === 'zone')   return el.zone === value;
-      if (type === 'niveau') return el.niveau === value;
-      if (type === 'grue')   return el.grue === value;
-      if (type === 'statut') return el.statut === value;
+      if (type === 'bloc')        return el.bloc === value;
+      if (type === 'zone')        return el.zone === value;
+      if (type === 'orientation') return el.orientation === value;
+      if (type === 'grue')        return el.grue === value;
+      if (type === 'statut')      return el.statut === value;
+      if (type === 'type')        return el.resFamille === value;
+      if (type === 'etat')        return el.resEtat === value;
       return false;
     })
     .map(el => el.expressId || parseInt(el.id))
@@ -330,4 +383,58 @@ function computeBlocActivityStats(elements) {
     };
   }
   return result;
+}
+
+// ── État (Res_État) — stats pour les 5 cartes KPI ─────────────────────────────
+function computeEtatStats(elements) {
+  const ETATS = ['Levé', 'À lever', 'À modéliser', 'À créer dans le chantier'];
+  const byEtat = {};
+  ETATS.forEach(e => byEtat[e] = { count: 0, volume: 0 });
+
+  let totalCount = 0, totalVolume = 0;
+  for (const el of (elements || [])) {
+    totalCount++;
+    totalVolume += el.volume || 0;
+    if (el.resEtat && byEtat[el.resEtat]) {
+      byEtat[el.resEtat].count++;
+      byEtat[el.resEtat].volume += el.volume || 0;
+    }
+  }
+  const pct = (c) => totalCount > 0 ? Math.round((c / totalCount) * 100) : 0;
+
+  // "Total" = somme des 4 catégories (Levé + À lever + À modéliser + À créer sur
+  // chantier) — n'inclut PAS les éléments sans Res_État du tout.
+  const totalRestantCount  = byEtat['Levé'].count  + byEtat['À lever'].count  + byEtat['À modéliser'].count  + byEtat['À créer dans le chantier'].count;
+  const totalRestantVolume = byEtat['Levé'].volume + byEtat['À lever'].volume + byEtat['À modéliser'].volume + byEtat['À créer dans le chantier'].volume;
+
+  return {
+    total:      { count: totalRestantCount, volume: totalRestantVolume },
+    leve:       { count: byEtat['Levé'].count,                    volume: byEtat['Levé'].volume,                    pct: pct(byEtat['Levé'].count) },
+    aLever:     { count: byEtat['À lever'].count,                 volume: byEtat['À lever'].volume,                 pct: pct(byEtat['À lever'].count) },
+    aModeliser: { count: byEtat['À modéliser'].count,              volume: byEtat['À modéliser'].volume,              pct: pct(byEtat['À modéliser'].count) },
+    aCreer:     { count: byEtat['À créer dans le chantier'].count, volume: byEtat['À créer dans le chantier'].volume, pct: pct(byEtat['À créer dans le chantier'].count) },
+  };
+}
+// ── Type (Res_Famille) × Orientation (Res_Orientation) — pour le carousel KPI ──
+function computeTypeOrientationStats(elements) {
+  const byType = {};
+  const byOrientation = {};
+  const cross = {}; // cross[type][orientation] = count
+
+  for (const el of (elements || [])) {
+    const type = el.resFamille || null;
+    const orient = el.orientation || null;
+    if (type) byType[type] = (byType[type] || 0) + 1;
+    if (orient) byOrientation[orient] = (byOrientation[orient] || 0) + 1;
+    if (type && orient) {
+      if (!cross[type]) cross[type] = {};
+      cross[type][orient] = (cross[type][orient] || 0) + 1;
+    }
+  }
+
+  const typeList = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+  const orientationList = Object.entries(byOrientation).sort((a, b) => b[1] - a[1]);
+  const orientationNames = orientationList.map(([name]) => name);
+
+  return { typeList, orientationList, orientationNames, cross };
 }

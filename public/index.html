@@ -48,11 +48,11 @@
           <!-- Triangle orange centré sur le T (entre S et G) -->
           <polygon points="48,2 70,36 26,36" fill="#E87722"/>
           <!-- Lettres SGTM avec plus d'espace -->
-          <text x="1" y="68" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="25" fill="white" letter-spacing="2">SGTM</text>
+          <text x="1" y="68" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="30" fill="white" letter-spacing="2">SGTM</text>
         </svg>
       </div>
-      <div class="sgtm-brand-sub">         </div>
-      <div class="sgtm-brand-cat"></div>
+      <div class="sgtm-brand-sub">SUIVI AVANCEMENT</div>
+      <div class="sgtm-brand-cat">Gradins</div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -77,11 +77,11 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 5h16M2 10h16M2 15h16"/></svg>
       </button>
       <div class="topbar-titles">
-       <div class="topbar-main-title" style="color:#ffffff;">Tableau de bord de gestion des réservations</div>
+        <div class="topbar-main-title">Tableau de bord de suivi des travaux des Gradins</div>
         <div class="topbar-meta">
           <div class="topbar-meta-block">
             <span class="topbar-meta-label">PROJET</span>
-            <span class="topbar-meta-text">Travaux de construction du Grand Stade de Casablanca - Travaux synthèse </span>
+            <span class="topbar-meta-text">Travaux de construction du Grand Stade de Casablanca - Lot n°3</span>
           </div>
       </div>
     </div>
@@ -115,7 +115,7 @@
       </div>
     </div>
     <div class="qf-group">
-      <label class="qf-item-label">Type</label>
+      <label class="qf-item-label">Zone</label>
       <div class="ms-wrapper" id="msZone">
         <button class="ms-btn" onclick="toggleDropdown('msZone')">
           Tout <span class="ms-badge" id="msZoneBadge" style="display:none"></span>
@@ -125,22 +125,34 @@
       </div>
     </div>
     <div class="qf-group">
-      <label class="qf-item-label">Niveau</label>
-      <div class="ms-wrapper" id="msNiveau">
-        <button class="ms-btn" onclick="toggleDropdown('msNiveau')">
-          Tout <span class="ms-badge" id="msNiveauBadge" style="display:none"></span>
+      <label class="qf-item-label">Orientation</label>
+      <div class="ms-wrapper" id="msOrientation">
+        <button class="ms-btn" onclick="toggleDropdown('msOrientation')">
+          Tout <span class="ms-badge" id="msOrientationBadge" style="display:none"></span>
           <svg viewBox="0 0 12 12" fill="currentColor" width="9"><path d="M2 4l4 4 4-4z"/></svg>
         </button>
-        <div class="ms-dropdown" id="msNiveauDrop"></div>
+        <div class="ms-dropdown" id="msOrientationDrop"></div>
       </div>
     </div>
     <div class="qf-group">
-      <label class="qf-item-label">Statut</label>
-      <select class="qf-select" id="filterStatut" onchange="onQuickFilter()">
-        <option value="">Tout</option>
-        <option value="realise">✅ Réalisé</option>
-        <option value="non_realise">🔴 Non réalisé</option>
-      </select>
+      <label class="qf-item-label">Type</label>
+      <div class="ms-wrapper" id="msType">
+        <button class="ms-btn" onclick="toggleDropdown('msType')">
+          Tout <span class="ms-badge" id="msTypeBadge" style="display:none"></span>
+          <svg viewBox="0 0 12 12" fill="currentColor" width="9"><path d="M2 4l4 4 4-4z"/></svg>
+        </button>
+        <div class="ms-dropdown" id="msTypeDrop"></div>
+      </div>
+    </div>
+    <div class="qf-group">
+      <label class="qf-item-label">État</label>
+      <div class="ms-wrapper" id="msEtat">
+        <button class="ms-btn" onclick="toggleDropdown('msEtat')">
+          Tout <span class="ms-badge" id="msEtatBadge" style="display:none"></span>
+          <svg viewBox="0 0 12 12" fill="currentColor" width="9"><path d="M2 4l4 4 4-4z"/></svg>
+        </button>
+        <div class="ms-dropdown" id="msEtatDrop"></div>
+      </div>
     </div>
     <button class="qf-reset" onclick="resetQuickFilters()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11"><path d="M2 8a6 6 0 1010.6-3H10m2 0V3m-2 2h2"/></svg>
@@ -149,100 +161,51 @@
     <div class="qf-count" id="qfCount"></div>
   </div>
 
-  <!-- ROW 1: 4 grandes cartes -->
-<section class="top-row">
+  <!-- ROW 1: 5 cartes État -->
+<section class="top-row" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
 
-  <!-- 1. Avancement Global -->
   <div class="panel top-card">
-    <div class="panel-title-sm">AVANCEMENT GLOBAL</div>
-    <div class="global-card-body">
-      <div class="kpi-donut-wrap">
-        <canvas id="kpiDonut" width="110" height="110"></canvas>
-        <div class="kpi-donut-label"><span class="kpi-pct" id="kpiPct">—</span></div>
-      </div>
-      <div class="global-stats">
-        <div class="global-stat-line">
-          <span class="gsl-label">Unités Réalisé</span>
-          <span class="gsl-val" id="kpiUnitesRealisees">—</span>
-        </div>
-        <div class="global-stat-line">
-          <span class="gsl-label">Unité Totale</span>
-          <span class="gsl-val" id="kpiUniteTotale">—</span>
-        </div>
+    <div class="panel-title-sm">Total</div>
+    <div class="global-stats">
+      <div class="global-stat-line">
+        <span class="gsl-val" id="etatTotalNum" style="font-size:20px">—</span>
       </div>
     </div>
   </div>
 
-  <!-- 2. Avancement par Activité -->
   <div class="panel top-card">
-    <div class="panel-title-sm">AVANCEMENT PAR ACTIVITÉ</div>
-    <div class="activity-body">
-      <div class="activity-item">
-        <div class="activity-header">
-          <span class="activity-name">Ouverture murale</span>
-          <span class="activity-pct" id="ferrPct">—</span>
-        </div>
-        <div class="activity-bar-bg">
-          <div class="activity-bar-fill activity-bar-ferr" id="ferrBar" style="width:0%"></div>
-        </div>
-      </div>
-      <div class="activity-item">
-        <div class="activity-header">
-          <span class="activity-name">Ouverture plancher</span>
-          <span class="activity-pct" id="coulPct">—</span>
-        </div>
-        <div class="activity-bar-bg">
-          <div class="activity-bar-fill activity-bar-coul" id="coulBar" style="width:0%"></div>
-        </div>
-      </div>
-      <div class="activity-item">
-        <div class="activity-header">
-          <span class="activity-name">Porte</span>
-          <span class="activity-pct" id="posePct">—</span>
-        </div>
-        <div class="activity-bar-bg">
-          <div class="activity-bar-fill activity-bar-pose" id="poseBar" style="width:0%"></div>
-        </div>
+    <div class="panel-title-sm">Levé</div>
+    <div class="global-stats">
+      <div class="global-stat-line">
+        <span class="gsl-val" id="etatLeveNum" style="font-size:20px">—</span>
       </div>
     </div>
   </div>
 
-  <!-- 3. Avancement par Bloc (chart intégré) -->
-  <div class="panel top-card top-card-wide">
-    <div class="panel-header-row">
-      <div class="panel-title-sm">NOMBRE LEVÉE TOPO</div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;">
-      <div style="font-size:48px;font-weight:800;color:#D7AA48;letter-spacing:-1px;" id="kpiTopoCount">—</div>
-      <div style="font-size:12px;color:#6b7a8d;font-weight:500;">Levée réalisée</div>
+  <div class="panel top-card">
+    <div class="panel-title-sm">À lever</div>
+    <div class="global-stats">
+      <div class="global-stat-line">
+        <span class="gsl-val" id="etatALeverNum" style="font-size:20px">—</span>
+      </div>
     </div>
   </div>
 
-  <!-- 4. Avancement Entreprise -->
   <div class="panel top-card">
-    <div class="panel-title-sm">AVANCEMENT ENTREPRISE</div>
-    <div class="enterprise-body">
-      <div class="enterprise-item">
-        <div class="ent-header">
-          <span class="ent-name sgtm-name">SGTM</span>
-          <span class="ent-pct" id="sgtmPct">—</span>
-        </div>
-        <div class="ent-bar-bg">
-          <div class="ent-bar-fill ent-bar-sgtm" id="sgtmBar" style="width:0%"></div>
-        </div>
-
+    <div class="panel-title-sm">À modéliser</div>
+    <div class="global-stats">
+      <div class="global-stat-line">
+        <span class="gsl-val" id="etatAModeliserNum" style="font-size:20px">—</span>
       </div>
-      <div class="enterprise-item">
-        <div class="ent-header">
-          <span class="ent-name tgcc-name">TGCC</span>
-          <span class="ent-pct" id="tgccPct">—</span>
-        </div>
-        <div class="ent-bar-bg">
-          <div class="ent-bar-fill ent-bar-tgcc" id="tgccBar" style="width:0%"></div>
-        </div>
+    </div>
+  </div>
 
+  <div class="panel top-card">
+    <div class="panel-title-sm">À créer sur chantier</div>
+    <div class="global-stats">
+      <div class="global-stat-line">
+        <span class="gsl-val" id="etatACreerNum" style="font-size:20px">—</span>
       </div>
-      <div class="ent-footnote">Pourcentage de levées réalisées par entreprise</div>
     </div>
   </div>
 
@@ -250,26 +213,144 @@
   <!-- ROW 2: Table + Maquette -->
   <section class="bottom-row">
 
-  <!-- Table Bloc et Activité -->
+  <!-- Secteurs de secteur (carousel 2 pages) -->
   <div class="panel bottom-left">
     <div class="panel-header-row">
-      <div class="panel-title-sm">ETAT DES RESERVATIONS</div>
+      <div class="panel-title-sm" id="kpiCarouselTitle">SECTEURS DE SECTEUR</div>
+      <div class="kpi-carousel-nav">
+        <button class="kpi-nav-btn" id="kpiPrevBtn" onclick="kpiCarouselGo(-1)" title="Précédent">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+        </button>
+        <div class="kpi-nav-dots" id="kpiNavDots">
+          <span class="kpi-dot active"></span>
+          <span class="kpi-dot"></span>
+        </div>
+        <button class="kpi-nav-btn" id="kpiNextBtn" onclick="kpiCarouselGo(1)" title="Suivant">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>BLOC</th>
-            <th>OUVERTURE MURALE %</th>
-            <th>OUVERTURE PLANCHER %</th>
-            <th>Porte %</th>
-            <th>AVANCEMENT GLOBAL %</th>
-          </tr>
-        </thead>
-        <tbody id="blocActivityBody"></tbody>
-      </table>
+
+    <div class="kpi-carousel-viewport">
+      <div class="kpi-carousel-track" id="kpiCarouselTrack">
+
+        <!-- PAGE 1 : État -->
+        <div class="kpi-slide">
+          <div class="ss-widget">
+          <div class="ss-sub">Lecture synthétique des réservations à lever, levées, à modéliser et à créer sur chantier.</div>
+
+          <div class="ss-callout" id="ssCallout">
+            <span class="ss-callout-label">Levé + À modéliser</span>
+            <span class="ss-callout-pct" id="ssCalloutPct">—</span>
+            <span class="ss-callout-count" id="ssCalloutCount">—</span>
+          </div>
+
+          <div class="ss-donuts">
+            <div class="ss-donut-col">
+              <div class="ss-donut-wrap"><canvas id="ssDonutMain"></canvas></div>
+              <div class="ss-legend">
+                <div class="ss-legend-item">
+                  <span class="ss-dot" style="background:#E87722"></span>
+                  <span class="ss-legend-label">À lever</span>
+                  <span class="ss-legend-pct" style="color:#E87722" id="ssPctALever">—</span>
+                  <span class="ss-legend-count" id="ssCountALever">—</span>
+                </div>
+                <div class="ss-legend-item">
+                  <span class="ss-dot" style="background:#D93077"></span>
+                  <span class="ss-legend-label">À créer sur chantier</span>
+                  <span class="ss-legend-pct" style="color:#D93077" id="ssPctACreer">—</span>
+                  <span class="ss-legend-count" id="ssCountACreer">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ss-donut-col">
+              <div class="ss-donut-wrap ss-donut-sub"><canvas id="ssDonutSub"></canvas></div>
+              <div class="ss-legend">
+                <div class="ss-legend-item">
+                  <span class="ss-dot" style="background:#22b07d"></span>
+                  <span class="ss-legend-label">Levé</span>
+                  <span class="ss-legend-pct" style="color:#22b07d" id="ssPctLeve">—</span>
+                  <span class="ss-legend-count" id="ssCountLeve">—</span>
+                </div>
+                <div class="ss-legend-item">
+                  <span class="ss-dot" style="background:#4A78D9"></span>
+                  <span class="ss-legend-label">À modéliser</span>
+                  <span class="ss-legend-pct" style="color:#4A78D9" id="ssPctAModeliser">—</span>
+                  <span class="ss-legend-count" id="ssCountAModeliser">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ss-total" id="ssTotal">— réservations</div>
+          </div>
+
+          <div class="rpe-widget">
+            <div class="rpe-title">Réservations par état</div>
+            <div class="rpe-sub">Vue instantanée de la répartition.</div>
+            <div class="rpe-body">
+              <div class="rpe-donut-wrap">
+                <canvas id="rpeDonut"></canvas>
+                <div class="rpe-center">
+                  <div class="rpe-center-num" id="rpeTotalNum">—</div>
+                  <div class="rpe-center-lbl">RÉSERVATIONS</div>
+                </div>
+              </div>
+              <div class="rpe-legend">
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#22b07d"></span>
+                  <span class="rpe-legend-label">Levé</span>
+                  <span class="rpe-legend-val" id="rpeValLeve">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#E87722"></span>
+                  <span class="rpe-legend-label">À lever</span>
+                  <span class="rpe-legend-val" id="rpeValALever">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#4A78D9"></span>
+                  <span class="rpe-legend-label">À modéliser</span>
+                  <span class="rpe-legend-val" id="rpeValAModeliser">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#D93077"></span>
+                  <span class="rpe-legend-label">À créer sur chantier</span>
+                  <span class="rpe-legend-val" id="rpeValACreer">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGE 2 : Type / Orientation / Type × Orientation -->
+        <div class="kpi-slide">
+          <div class="to-widget">
+            <div class="to-title">Type</div>
+            <div class="to-sub">Répartition par type d'élément.</div>
+            <div class="to-bars" id="toTypeBars"></div>
+          </div>
+
+          <div class="to-widget">
+            <div class="to-title">Orientation</div>
+            <div class="to-sub">Répartition par orientation.</div>
+            <div class="to-bars" id="toOrientationBars"></div>
+          </div>
+
+          <div class="to-widget">
+            <div class="to-title">Type × Orientation</div>
+            <div class="to-sub">Croisement des types et des orientations.</div>
+            <div class="table-wrap">
+              <table class="data-table" id="toCrossTable">
+                <thead><tr id="toCrossHead"></tr></thead>
+                <tbody id="toCrossBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
-    <div class="table-footer" id="tableFooter"></div>
   </div>
 
   <!-- Viewer 3D -->

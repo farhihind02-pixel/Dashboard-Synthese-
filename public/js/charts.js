@@ -2,6 +2,8 @@
  * charts.js — Graphiques SGTM
  */
 let kpiDonutChart=null, blocChart=null;
+let ssDonutMainChart=null, ssDonutSubChart=null;
+let rpeDonutChart=null;
 
 const SGTM_BLOCS = new Set(['1','2','3']);
 const TGCC_BLOCS = new Set(['TGCC']);
@@ -206,4 +208,152 @@ function renderBlocActivityTable(elements) {
   </tr>`;
 
   if (footer) footer.textContent = `${blocs.length} bloc(s)`;
+}
+
+// ── Secteurs de secteur (donuts État) ──────────────────────────────────────────
+function renderSecteursDeSecteur(stats) {
+  if (!stats) return;
+  const { leve, aLever, aModeliser, aCreer } = stats;
+  const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
+  const pct = (c) => total > 0 ? Math.round((c / total) * 100) : 0;
+  const combinedCount = leve.count + aModeliser.count;
+  const combinedPct   = pct(combinedCount);
+
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const fmt = n => (n || 0).toLocaleString('fr-FR') + ' réservations';
+
+  setText('ssCalloutPct',   combinedPct + ' %');
+  setText('ssCalloutCount', fmt(combinedCount));
+
+  setText('ssPctALever',   pct(aLever.count) + ' %');
+  setText('ssCountALever', fmt(aLever.count));
+  setText('ssPctACreer',   pct(aCreer.count) + ' %');
+  setText('ssCountACreer', fmt(aCreer.count));
+
+  setText('ssPctLeve',       total > 0 ? (leve.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
+  setText('ssCountLeve',     fmt(leve.count));
+  setText('ssPctAModeliser', total > 0 ? (aModeliser.count / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %' : '0 %');
+  setText('ssCountAModeliser', fmt(aModeliser.count));
+
+  setText('ssTotal', fmt(total));
+
+  // Donut principal : À lever / À créer sur chantier / (Levé + À modéliser combinés)
+  const ctxMain = document.getElementById('ssDonutMain');
+  if (ctxMain) {
+    if (ssDonutMainChart) { ssDonutMainChart.destroy(); ssDonutMainChart = null; }
+    ssDonutMainChart = new Chart(ctxMain, {
+      type: 'doughnut',
+      data: {
+        labels: ['À lever', 'À créer sur chantier', 'Levé + À modéliser'],
+        datasets: [{
+          data: [aLever.count, aCreer.count, combinedCount],
+          backgroundColor: ['#E87722', '#D93077', '#D9C68A'],
+          borderWidth: 2, borderColor: '#fff',
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%', animation: { duration: 700 },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed}` } } },
+      },
+    });
+  }
+
+  // Donut secondaire : détail Levé / À modéliser (composition du "Levé + À modéliser")
+  const ctxSub = document.getElementById('ssDonutSub');
+  if (ctxSub) {
+    if (ssDonutSubChart) { ssDonutSubChart.destroy(); ssDonutSubChart = null; }
+    ssDonutSubChart = new Chart(ctxSub, {
+      type: 'doughnut',
+      data: {
+        labels: ['Levé', 'À modéliser'],
+        datasets: [{
+          data: [leve.count, aModeliser.count],
+          backgroundColor: ['#22b07d', '#4A78D9'],
+          borderWidth: 2, borderColor: '#fff',
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%', animation: { duration: 700 },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed}` } } },
+      },
+    });
+  }
+}
+// ── Réservations par état (donut simple + légende) ────────────────────────────
+function renderReservationsParEtat(stats) {
+  if (!stats) return;
+  const { leve, aLever, aModeliser, aCreer } = stats;
+  const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
+
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const fmtPct = (c) => total > 0 ? (c / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) : '0';
+  const fmtLine = (c) => `${c.toLocaleString('fr-FR')} · ${fmtPct(c)} %`;
+
+  setText('rpeTotalNum', total.toLocaleString('fr-FR'));
+  setText('rpeValLeve',       fmtLine(leve.count));
+  setText('rpeValALever',     fmtLine(aLever.count));
+  setText('rpeValAModeliser', fmtLine(aModeliser.count));
+  setText('rpeValACreer',     fmtLine(aCreer.count));
+
+  const ctx = document.getElementById('rpeDonut');
+  if (!ctx) return;
+  if (rpeDonutChart) { rpeDonutChart.destroy(); rpeDonutChart = null; }
+  rpeDonutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Levé', 'À lever', 'À modéliser', 'À créer sur chantier'],
+      datasets: [{
+        data: [leve.count, aLever.count, aModeliser.count, aCreer.count],
+        backgroundColor: ['#22b07d', '#E87722', '#4A78D9', '#D93077'],
+        borderWidth: 3, borderColor: '#fff',
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '72%', animation: { duration: 700 },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed}` } } },
+    },
+  });
+}
+
+// ── Type / Orientation / Type × Orientation (barres + tableau croisé) ─────────
+const TO_BAR_COLORS = ['#C9A227', '#1a1a1a', '#6B7280', '#4A78D9', '#22b07d', '#E87722', '#D93077'];
+
+function renderTypeOrientationBars(containerId, list) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const max = list.length ? list[0][1] : 1;
+  el.innerHTML = list.map(([label, count], i) => {
+    const color = TO_BAR_COLORS[i % TO_BAR_COLORS.length];
+    const widthPct = max > 0 ? Math.round((count / max) * 100) : 0;
+    return `
+      <div class="to-bar-row">
+        <span class="to-bar-label">${label}</span>
+        <div class="to-bar-track"><div class="to-bar-fill" style="width:${widthPct}%;background:${color}"></div></div>
+        <span class="to-bar-val">${count.toLocaleString('fr-FR')}</span>
+      </div>`;
+  }).join('') || '<div class="to-sub">Aucune donnée</div>';
+}
+
+function renderTypeOrientationCrossTable(toStats) {
+  const head = document.getElementById('toCrossHead');
+  const body = document.getElementById('toCrossBody');
+  if (!head || !body) return;
+
+  const { typeList, orientationNames, cross } = toStats;
+
+  head.innerHTML = `<th>TYPE</th>` +
+    orientationNames.map(o => `<th>${o}</th>`).join('') +
+    `<th>TOTAL</th>`;
+
+  body.innerHTML = typeList.map(([type, total]) => {
+    const cells = orientationNames.map(o => `<td>${(cross[type]?.[o] || 0).toLocaleString('fr-FR')}</td>`).join('');
+    return `<tr><td><strong>${type}</strong></td>${cells}<td><strong>${total.toLocaleString('fr-FR')}</strong></td></tr>`;
+  }).join('') || `<tr><td colspan="${orientationNames.length + 2}">Aucune donnée</td></tr>`;
+}
+
+function renderTypeOrientation(elements) {
+  const toStats = computeTypeOrientationStats(elements);
+  renderTypeOrientationBars('toTypeBars', toStats.typeList);
+  renderTypeOrientationBars('toOrientationBars', toStats.orientationList);
+  renderTypeOrientationCrossTable(toStats);
 }

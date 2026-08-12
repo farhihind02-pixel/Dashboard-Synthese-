@@ -307,6 +307,104 @@ body { display:flex; height:100vh; overflow:hidden; }
 }
 .bottom-left .panel-header-row { padding:0 12px 8px; border-bottom:1px solid var(--panel-border); }
 
+/* ===== Secteurs de secteur ===== */
+.ss-widget {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px 20px;
+}
+.ss-sub { padding:0 0 2px; font-size:12px; color:var(--text-secondary); line-height:1.4; }
+
+.ss-callout {
+  margin:8px 0 0; background:var(--bg-subtle,#f7f5f1); border:1px solid var(--panel-border);
+  border-radius:10px; padding:6px 12px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+}
+.ss-callout-label { font-size:10px; font-weight:700; color:var(--text-primary); }
+.ss-callout-pct   { font-size:16px; font-weight:800; color:#C9A227; }
+.ss-callout-count { font-size:10px; color:var(--text-secondary); margin-left:auto; }
+
+.ss-donuts {
+  display:flex; align-items:flex-start; justify-content:space-around;
+  padding:12px 10px 4px; gap:6px; flex-wrap:wrap;
+}
+
+.ss-donut-col { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; }
+.ss-donut-wrap { position:relative; width:120px; height:120px; flex-shrink:0; }
+.ss-donut-sub  { width:96px; height:96px; }
+
+.ss-legend { display:flex; flex-direction:column; gap:6px; width:100%; }
+.ss-legend-item { display:flex; align-items:center; gap:5px; font-size:10px; flex-wrap:wrap; }
+.ss-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.ss-legend-label { font-weight:600; color:var(--text-primary); flex:1; min-width:0; }
+.ss-legend-pct   { font-weight:800; font-size:12px; }
+.ss-legend-count { color:var(--text-secondary); font-size:9px; width:100%; padding-left:12px; }
+
+.ss-total { text-align:center; font-size:11px; color:var(--text-secondary); padding:4px 0 8px; }
+
+/* ===== Carousel KPI (page État / page Type-Orientation) ===== */
+.kpi-carousel-nav { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.kpi-nav-btn {
+  width:24px; height:24px; border-radius:50%; border:1px solid var(--panel-border);
+  background:var(--panel-bg); color:var(--text-secondary); display:flex; align-items:center;
+  justify-content:center; cursor:pointer; transition:all .15s; padding:0;
+}
+.kpi-nav-btn:hover { background:var(--sgtm-gold,#C9A227); color:#fff; border-color:var(--sgtm-gold,#C9A227); }
+.kpi-nav-dots { display:flex; gap:5px; }
+.kpi-dot { width:6px; height:6px; border-radius:50%; background:var(--panel-border); transition:background .2s; }
+.kpi-dot.active { background:var(--sgtm-gold,#C9A227); }
+
+.kpi-carousel-viewport { overflow:hidden; flex:1; min-height:0; }
+.kpi-carousel-track {
+  display:flex; height:100%; width:200%;
+  transition:transform .35s ease;
+}
+.kpi-slide { width:50%; overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; padding:14px; gap:14px; }
+
+/* ===== Type / Orientation (barres) + Type × Orientation (tableau) ===== */
+.to-widget {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px 20px;
+}
+.to-title { font-size:16px; font-weight:800; color:var(--text-primary); }
+.to-sub   { font-size:12px; color:var(--text-secondary); margin-top:3px; margin-bottom:18px; }
+
+.to-bars { display:flex; flex-direction:column; gap:16px; }
+.to-bar-row { display:flex; align-items:center; gap:14px; }
+.to-bar-label { font-size:12px; font-weight:600; color:var(--text-primary); width:110px; flex-shrink:0; text-transform:uppercase; letter-spacing:.3px; }
+.to-bar-track { flex:1; height:10px; background:#EFECE5; border-radius:6px; overflow:hidden; }
+.to-bar-fill  { height:100%; border-radius:6px; transition:width .5s ease; }
+.to-bar-val   { font-size:15px; font-weight:800; color:var(--text-primary); width:48px; text-align:right; flex-shrink:0; }
+
+.to-widget + .to-widget { margin-top:0; }
+.to-widget .table-wrap { max-height:none; overflow:visible; }
+.to-widget .data-table { border:1px solid var(--panel-border); border-radius:8px; overflow:hidden; }
+.to-widget .data-table th { font-size:10px; background:var(--bg-subtle,#f7f5f1); padding:10px 12px; }
+.to-widget .data-table td { font-size:13px; padding:10px 12px; }
+.to-widget .data-table tr:not(:last-child) td { border-bottom:1px solid var(--panel-border); }
+
+/* ===== Réservations par état ===== */
+.rpe-widget {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px 20px;
+}
+.rpe-title { font-size:14px; font-weight:800; color:var(--text-primary); }
+.rpe-sub   { font-size:11px; color:var(--text-secondary); margin-top:2px; margin-bottom:12px; }
+
+.rpe-body { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+
+.rpe-donut-wrap { position:relative; width:130px; height:130px; flex-shrink:0; }
+.rpe-center {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; pointer-events:none;
+}
+.rpe-center-num { font-size:26px; font-weight:800; color:var(--text-primary); line-height:1; }
+.rpe-center-lbl { font-size:8px; font-weight:700; letter-spacing:1px; color:var(--text-secondary); margin-top:3px; }
+
+.rpe-legend { display:flex; flex-direction:column; gap:10px; flex:1; min-width:0; }
+.rpe-legend-item { display:flex; align-items:center; gap:7px; font-size:12px; }
+.rpe-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.rpe-legend-label { font-weight:700; color:var(--text-primary); flex:1; min-width:0; }
+.rpe-legend-val { color:var(--text-secondary); font-size:11px; white-space:nowrap; }
+
 .table-wrap { overflow-y:auto; overflow-x:hidden; flex:1; min-height:0; }
 .data-table { width:100%; border-collapse:collapse; font-size:12px; }
 .data-table thead th {
@@ -502,4 +600,14 @@ body { display:flex; height:100vh; overflow:hidden; }
 }
 .sidebar-header {
   overflow: visible !important;
+}
+
+#msSujetDrop .ms-item {
+  display: block;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+#msSujetDrop .ms-item input {
+  margin-right: 6px;
 }

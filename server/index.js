@@ -16,12 +16,20 @@ const {
   APS_CALLBACK_URL = 'http://localhost:8080/api/auth/callback',
   ACC_PROJECT_ID, ACC_MODEL_URN, PORT = 8080,
 } = process.env;
-const VERSION_URN    = 'urn:adsk.wipprod:fs.file:vf.4xZdpzE4SIGaMtUYBWcFZw?version=2';
-const VIEWABLE_GUID  = 'a0d88613-0913-84ab-69c9-a624db94c6e8';
+
+// URN de l'item (lineage) ACC actuellement utilisé — mis à jour via /api/switch-model
+let CURRENT_ITEM_URN = 'urn:adsk.wipprod:dm.lineage:HfUaM8PpSwu4Ay9Tm4Mb7g'; // GSC-MAF-PE-ST-ZZ-ZZ-M3-001000_Syn 2.0 (1)_détaché_détaché1.rvt (V4)
+
+let VERSION_URN    = 'urn:adsk.wipprod:fs.file:vf.HfUaM8PpSwu4Ay9Tm4Mb7g?version=4'; // ← V4 confirmé (ne plus revenir à version=2 après un redéploiement)
+let VIEWABLE_GUID  = 'f78d1b08-57e9-2515-8d58-efb0b9da5b51'; // fourni par le lien ACC (non requis par le viewer, gardé pour référence)
 const ACC_FOLDER_URN = 'urn:adsk.wipprod:fs.folder:co.wCGS1GRTQ9Osfrb_hKFevg';;
 
-const DERIVATIVE_URN = Buffer.from(VERSION_URN).toString('base64')
-  .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+function computeDerivativeUrn(versionUrn) {
+  return Buffer.from(versionUrn).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+let DERIVATIVE_URN = computeDerivativeUrn(VERSION_URN);
 
 console.log('[Config] Derivative URN:', DERIVATIVE_URN);
 console.log('=== CONFIG CHARGÉE ===');
@@ -127,7 +135,65 @@ app.get('/api/token', async (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  res.json({ modelUrn: DERIVATIVE_URN, viewableGuid: VIEWABLE_GUID, versionUrn: VERSION_URN });
+  res.json({ modelUrn: DERIVATIVE_URN, viewableGuid: VIEWABLE_GUID, versionUrn: VERSION_URN, itemUrn: CURRENT_ITEM_URN });
+});
+
+// ── Basculer sur un nouveau fichier ACC (nouvelle maquette) ───────────────────
+// GET /api/switch-model?itemUrn=urn:adsk.wipprod:dm.lineage:XXXX
+// Résout automatiquement la dernière version (tip) du fichier et lance la traduction SVF2.
+// Sans paramètre, utilise CURRENT_ITEM_URN (le dernier lien fourni).
+app.get('/api/switch-model', async (req, res) => {
+  try {
+    const token   = await getValidToken();
+    const itemUrn = req.query.itemUrn || CURRENT_ITEM_URN;
+
+    const itemUrl = `https://developer.api.autodesk.com/data/v1/projects/b.${ACC_PROJECT_ID}/items/${encodeURIComponent(itemUrn)}`;
+    const itemResp = await fetch(itemUrl, { headers: { Authorization: `Bearer ${token}` } });
+    const itemText = await itemResp.text();
+    if (!itemResp.ok) {
+      console.error('[SwitchModel] Erreur résolution item:', itemResp.status, itemText.slice(0, 300));
+      return res.status(itemResp.status).json({ error: itemText });
+    }
+    const itemData = JSON.parse(itemText);
+    const tipVersionId = itemData?.data?.relationships?.tip?.data?.id;
+    if (!tipVersionId) {
+      return res.status(500).json({ error: 'Version "tip" introuvable pour cet item', body: itemData });
+    }
+
+    CURRENT_ITEM_URN = itemUrn;
+    VERSION_URN      = tipVersionId;
+    DERIVATIVE_URN   = computeDerivativeUrn(VERSION_URN);
+    VIEWABLE_GUID    = null; // sera ignoré : le viewer charge la géométrie par défaut du document
+
+    console.log('[SwitchModel] Nouvel item:', CURRENT_ITEM_URN);
+    console.log('[SwitchModel] Nouvelle version:', VERSION_URN);
+    console.log('[SwitchModel] Nouveau derivative URN:', DERIVATIVE_URN);
+
+    // Lancer automatiquement la traduction SVF pour cette nouvelle version
+    // (SVF2 n'est pas supporté pour ce fichier — confirmé par l'API : "SVF2 is not
+    // supported for this design")
+    const jobResp = await fetch('https://developer.api.autodesk.com/modelderivative/v2/designdata/job', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'x-ads-force': 'true' },
+      body: JSON.stringify({
+        input:  { urn: DERIVATIVE_URN, compressedUrn: false },
+        output: { formats: [{ type: 'svf', views: ['2d', '3d'] }] },
+      }),
+    });
+    const jobText = await jobResp.text();
+    console.log('[SwitchModel] Traduction lancée:', jobResp.status, jobText.slice(0, 300));
+
+    res.json({
+      message: 'Modèle basculé. Traduction SVF lancée — vérifiez avec GET /api/manifest jusqu\'à status=success avant de recharger le dashboard.',
+      itemUrn: CURRENT_ITEM_URN,
+      versionUrn: VERSION_URN,
+      derivativeUrn: DERIVATIVE_URN,
+      translateJob: { status: jobResp.status, body: jobText.slice(0, 500) },
+    });
+  } catch (err) {
+    console.error('[SwitchModel] Erreur:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Vérifier / Déclencher la traduction SVF2 ──────────────────────────────────
@@ -149,7 +215,7 @@ app.post('/api/translate', async (req, res) => {
     const token = await getValidToken();
     const body  = {
       input:  { urn: DERIVATIVE_URN, compressedUrn: false },
-      output: { formats: [{ type: 'svf2', views: ['2d', '3d'] }] },
+      output: { formats: [{ type: 'svf', views: ['2d', '3d'] }] },
     };
     const resp = await fetch('https://developer.api.autodesk.com/modelderivative/v2/designdata/job', {
       method: 'POST',

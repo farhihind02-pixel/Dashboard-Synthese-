@@ -258,6 +258,7 @@ function filterViewerByStatut(statut) {
 
 window.showAllElements = function() {
   if (!viewer) return;
+  if (typeof stopBlink === 'function') stopBlink();
   viewer.showAll();
   viewer.fitToView();
   document.getElementById('btnIsolate')?.classList.remove('active');
