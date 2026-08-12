@@ -1,6 +1,19 @@
 /**
  * config.js — Configuration SGTM BIM Dashboard
  */
+
+// Libellés affichés pour chaque Bloc (le filtrage interne utilise toujours '1','2','3','4')
+const BLOC_LABELS = {
+  '1': 'SUD',
+  '2': 'OUEST',
+  '3': 'NORD',
+  '4': 'EST',
+};
+function getBlocLabel(b) {
+  if (b === 'TGCC') return 'TGCC';
+  return BLOC_LABELS[b] || b;
+}
+
 const BIM_CONFIG = {
   colors: {
     realise:     '#B8960C',

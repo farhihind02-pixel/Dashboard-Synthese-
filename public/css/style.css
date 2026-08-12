@@ -630,3 +630,112 @@ body { display:flex; height:100vh; overflow:hidden; }
 #msSujetDrop .ms-item input {
   margin-right: 6px;
 }
+/* ===== Levées Topo + cartes descriptives (thème clair) ===== */
+.topo-kpi-row {
+  display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:10px;
+  padding:0 14px 10px;
+}
+
+.topo-card {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-left:3px solid #C9A227;
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px;
+}
+.topo-card-main {
+  border-left-color:transparent;
+  position:relative;
+}
+.topo-card-main::before {
+  content:'';
+  position:absolute; left:-1px; top:0; bottom:0; width:3px;
+  background:linear-gradient(to bottom, #22b07d 0%, #22b07d 50%, #4A78D9 50%, #4A78D9 100%);
+  border-radius:var(--radius) 0 0 var(--radius);
+}
+
+.topo-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.topo-card-title { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-secondary); }
+.topo-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+.topo-dot-split {
+  background: conic-gradient(#22b07d 0deg 180deg, #4A78D9 180deg 360deg);
+}
+
+.topo-card-num { font-size:28px; font-weight:800; color:var(--text-primary); line-height:1.2; margin-top:4px; }
+.topo-card-sub { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+
+.topo-progress { display:flex; height:6px; border-radius:4px; overflow:hidden; background:#EFECE5; margin-top:10px; }
+.topo-progress-fill { height:100%; }
+.topo-progress-leve      { background:#22b07d; }
+.topo-progress-modeliser { background:#4A78D9; }
+
+.topo-desc-row {
+  display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px;
+  padding:0 14px 14px;
+}
+.topo-desc-card {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-left:3px solid #C9A227;
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px;
+}
+.topo-desc-header { display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+.topo-desc-title { font-size:13px; font-weight:700; color:var(--text-primary); }
+.topo-desc-text { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+
+@media (max-width: 1100px) {
+  .topo-kpi-row, .topo-desc-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ===== Réservations par zone / Surface cumulée (page 4, thème clair) ===== */
+.rz-widget, .sc-widget {
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px 20px;
+}
+
+.rz-header, .sc-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.rz-title, .sc-title { font-size:16px; font-weight:800; color:var(--text-primary); }
+.rz-sub, .sc-sub { font-size:11px; color:var(--text-secondary); margin-top:3px; max-width:420px; }
+.rz-badge {
+  font-size:10px; font-weight:700; color:#C9A227; background:rgba(201,162,39,.12);
+  border:1px solid rgba(201,162,39,.3); border-radius:20px; padding:4px 10px; white-space:nowrap;
+}
+
+.rz-body { display:flex; align-items:flex-start; gap:20px; margin-top:16px; flex-wrap:wrap; }
+.rz-donut-wrap { position:relative; width:170px; height:170px; flex-shrink:0; }
+.rz-center {
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; pointer-events:none;
+}
+.rz-center-num { font-size:32px; font-weight:800; color:var(--text-primary); line-height:1; }
+.rz-center-lbl { font-size:10px; color:var(--text-secondary); margin-top:4px; max-width:90px; }
+
+.rz-legend { flex:1; min-width:180px; max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+.rz-legend-item {
+  display:flex; align-items:center; gap:8px; font-size:12px; padding:6px 4px; border-radius:6px;
+}
+.rz-legend-item:hover { background:var(--bg-subtle,#f7f5f1); }
+.rz-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.rz-legend-label { font-weight:700; color:var(--text-primary); flex:1; min-width:0; }
+.rz-legend-count { color:var(--text-secondary); font-size:11px; width:34px; text-align:right; }
+.rz-legend-pct   { font-weight:800; color:var(--text-primary); font-size:12px; width:52px; text-align:right; }
+
+.sc-tabs { display:flex; gap:4px; background:var(--bg-subtle,#f7f5f1); border-radius:20px; padding:3px; flex-shrink:0; }
+.sc-tab {
+  border:none; background:transparent; font-size:11px; font-weight:600; color:var(--text-secondary);
+  padding:6px 12px; border-radius:16px; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.sc-tab:hover { color:var(--text-primary); }
+.sc-tab.active { background:#fff; color:var(--text-primary); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+
+.sc-summary { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:16px; }
+.sc-summary-card { background:var(--bg-subtle,#f7f5f1); border-radius:10px; padding:10px 12px; }
+.sc-summary-label { font-size:9px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-secondary); }
+.sc-summary-val { font-size:16px; font-weight:800; color:var(--text-primary); margin-top:3px; }
+
+.sc-bars { display:flex; flex-direction:column; gap:14px; margin-top:18px; }
+.sc-bar-row { }
+.sc-bar-top { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:5px; }
+.sc-bar-name { font-size:12px; font-weight:700; color:var(--text-primary); }
+.sc-bar-meta { font-size:10px; color:var(--text-secondary); }
+.sc-bar-right { text-align:right; }
+.sc-bar-val { font-size:13px; font-weight:800; color:var(--text-primary); }
+.sc-bar-pct { font-size:10px; color:var(--text-secondary); }
+.sc-bar-track { display:flex; align-items:center; gap:10px; }
+.sc-bar-bg { flex:1; height:8px; background:#EFECE5; border-radius:5px; overflow:hidden; }
+.sc-bar-fill { height:100%; border-radius:5px; transition:width .5s ease; }

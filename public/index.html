@@ -123,62 +123,99 @@
         <div class="ms-dropdown" id="msEtatDrop"></div>
       </div>
     </div>
-    <button class="qf-reset" onclick="resetQuickFilters()">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11"><path d="M2 8a6 6 0 1010.6-3H10m2 0V3m-2 2h2"/></svg>
-      Réinitialiser
-    </button>
     <div class="qf-count" id="qfCount"></div>
   </div>
 
-  <!-- ROW 1: 5 cartes État -->
-<section class="top-row" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+  <!-- ROW 1: Levées Topo -->
+<section class="topo-kpi-row">
 
-  <div class="panel top-card">
-    <div class="panel-title-sm">Total</div>
-    <div class="global-stats">
-      <div class="global-stat-line">
-        <span class="gsl-val" id="etatTotalNum" style="font-size:20px">—</span>
-      </div>
+  <div class="topo-card topo-card-main">
+    <div class="topo-card-header">
+      <div class="topo-card-title">LEVÉES TOPO</div>
+      <span class="topo-dot topo-dot-split"></span>
+    </div>
+    <div class="topo-card-num" id="topoLeveesTopoNum">—</div>
+    <div class="topo-card-sub" id="topoLeveesTopoSub">—</div>
+    <div class="topo-progress">
+      <div class="topo-progress-fill topo-progress-leve" id="topoProgressLeve"></div>
+      <div class="topo-progress-fill topo-progress-modeliser" id="topoProgressModeliser"></div>
     </div>
   </div>
 
-  <div class="panel top-card">
-    <div class="panel-title-sm">Levé</div>
-    <div class="global-stats">
-      <div class="global-stat-line">
-        <span class="gsl-val" id="etatLeveNum" style="font-size:20px">—</span>
-      </div>
+  <div class="topo-card" style="border-left-color:#22b07d">
+    <div class="topo-card-header">
+      <div class="topo-card-title">LEVÉ</div>
+      <span class="topo-dot" style="background:#22b07d"></span>
     </div>
+    <div class="topo-card-num" id="topoLeveNum">—</div>
+    <div class="topo-card-sub" id="topoLeveSub">—</div>
   </div>
 
-  <div class="panel top-card">
-    <div class="panel-title-sm">À lever</div>
-    <div class="global-stats">
-      <div class="global-stat-line">
-        <span class="gsl-val" id="etatALeverNum" style="font-size:20px">—</span>
-      </div>
+  <div class="topo-card" style="border-left-color:#E87722">
+    <div class="topo-card-header">
+      <div class="topo-card-title">À LEVER</div>
+      <span class="topo-dot" style="background:#E87722"></span>
     </div>
+    <div class="topo-card-num" id="topoALeverNum">—</div>
+    <div class="topo-card-sub" id="topoALeverSub">—</div>
   </div>
 
-  <div class="panel top-card">
-    <div class="panel-title-sm">À modéliser</div>
-    <div class="global-stats">
-      <div class="global-stat-line">
-        <span class="gsl-val" id="etatAModeliserNum" style="font-size:20px">—</span>
-      </div>
+  <div class="topo-card" style="border-left-color:#4A78D9">
+    <div class="topo-card-header">
+      <div class="topo-card-title">À MODÉLISER</div>
+      <span class="topo-dot" style="background:#4A78D9"></span>
     </div>
+    <div class="topo-card-num" id="topoAModeliserNum">—</div>
+    <div class="topo-card-sub" id="topoAModeliserSub">—</div>
   </div>
 
-  <div class="panel top-card">
-    <div class="panel-title-sm">À créer sur chantier</div>
-    <div class="global-stats">
-      <div class="global-stat-line">
-        <span class="gsl-val" id="etatACreerNum" style="font-size:20px">—</span>
-      </div>
+  <div class="topo-card" style="border-left-color:#D93077">
+    <div class="topo-card-header">
+      <div class="topo-card-title">À CRÉER SUR CHANTIER</div>
+      <span class="topo-dot" style="background:#D93077"></span>
     </div>
+    <div class="topo-card-num" id="topoACreerNum">—</div>
+    <div class="topo-card-sub" id="topoACreerSub">—</div>
   </div>
 
 </section>
+
+<section class="topo-desc-row">
+
+  <div class="topo-desc-card" style="border-left-color:#22b07d">
+    <div class="topo-desc-header">
+      <span class="topo-dot" style="background:#22b07d"></span>
+      <span class="topo-desc-title">Levé</span>
+    </div>
+    <div class="topo-desc-text">Présente dans la maquette et confirmée sur chantier par le levé Topo.</div>
+  </div>
+
+  <div class="topo-desc-card" style="border-left-color:#E87722">
+    <div class="topo-desc-header">
+      <span class="topo-dot" style="background:#E87722"></span>
+      <span class="topo-desc-title">À lever</span>
+    </div>
+    <div class="topo-desc-text">Contrôle Topo à réaliser.</div>
+  </div>
+
+  <div class="topo-desc-card" style="border-left-color:#4A78D9">
+    <div class="topo-desc-header">
+      <span class="topo-dot" style="background:#4A78D9"></span>
+      <span class="topo-desc-title">À modéliser</span>
+    </div>
+    <div class="topo-desc-text">Présente sur chantier et relevée par le Topo, mais absente de la maquette.</div>
+  </div>
+
+  <div class="topo-desc-card" style="border-left-color:#D93077">
+    <div class="topo-desc-header">
+      <span class="topo-dot" style="background:#D93077"></span>
+      <span class="topo-desc-title">À créer sur chantier</span>
+    </div>
+    <div class="topo-desc-text">Présente dans la maquette mais non constatée sur chantier. Confirmation BET / Synthèse en attente.</div>
+  </div>
+
+</section>
+
   <!-- ROW 2: Table + Maquette -->
   <section class="bottom-row">
 
@@ -341,6 +378,63 @@
               </table>
             </div>
           </div>
+        </div>
+
+        <!-- PAGE 4 : Réservations par zone / Surface cumulée -->
+        <div class="kpi-slide">
+
+          <div class="rz-widget">
+            <div class="rz-header">
+              <div>
+                <div class="rz-title">Réservations par zone</div>
+                <div class="rz-sub">Répartition des réservations par zone. Une ou plusieurs zones peuvent être sélectionnées.</div>
+              </div>
+              <span class="rz-badge" id="rzZoneCountBadge">— zones</span>
+            </div>
+            <div class="rz-body">
+              <div class="rz-donut-wrap">
+                <canvas id="rzDonut"></canvas>
+                <div class="rz-center">
+                  <div class="rz-center-num" id="rzTotalNum">—</div>
+                  <div class="rz-center-lbl">Réservations visibles</div>
+                </div>
+              </div>
+              <div class="rz-legend" id="rzLegend"></div>
+            </div>
+          </div>
+
+          <div class="sc-widget">
+            <div class="sc-header">
+              <div>
+                <div class="sc-title">Surface cumulée</div>
+                <div class="sc-sub">Emprise B × H des réservations correspondant à la sélection.</div>
+              </div>
+              <div class="sc-tabs" id="scTabs">
+                <button class="sc-tab" data-group="etat" onclick="scSetGroupBy('etat')">État</button>
+                <button class="sc-tab" data-group="zone" onclick="scSetGroupBy('zone')">Zone</button>
+                <button class="sc-tab" data-group="type" onclick="scSetGroupBy('type')">Type</button>
+                <button class="sc-tab active" data-group="orientation" onclick="scSetGroupBy('orientation')">Orientation</button>
+              </div>
+            </div>
+
+            <div class="sc-summary">
+              <div class="sc-summary-card">
+                <div class="sc-summary-label">SURFACE TOTALE</div>
+                <div class="sc-summary-val" id="scTotalSurface">—</div>
+              </div>
+              <div class="sc-summary-card">
+                <div class="sc-summary-label">MOYENNE / RÉSERVATION</div>
+                <div class="sc-summary-val" id="scAvgSurface">—</div>
+              </div>
+              <div class="sc-summary-card">
+                <div class="sc-summary-label">DIMENSIONS DISPONIBLES</div>
+                <div class="sc-summary-val" id="scDimsAvailable">—</div>
+              </div>
+            </div>
+
+            <div class="sc-bars" id="scBars"></div>
+          </div>
+
         </div>
 
       </div>

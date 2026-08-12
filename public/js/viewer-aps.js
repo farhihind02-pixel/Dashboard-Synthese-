@@ -387,3 +387,27 @@ window.toggleColorOverrides = function() {
   }
   document.getElementById('btnColor')?.classList.toggle('active', coloringApplied);
 };
+// ── Thème sombre de la maquette 3D ─────────────────────────────────────────────
+let modelDarkThemeOn = false;
+
+window.toggleModelDarkTheme = function() {
+  if (!viewer) return;
+  modelDarkThemeOn = !modelDarkThemeOn;
+
+  try {
+    if (modelDarkThemeOn) {
+      // Thème sombre : fond dégradé foncé + interface du viewer assombrie
+      viewer.setBackgroundColor(24, 26, 32, 12, 13, 17);
+      if (typeof viewer.setTheme === 'function') viewer.setTheme('dark-theme');
+    } else {
+      // Retour au thème clair par défaut
+      viewer.setBackgroundColor(235, 235, 235, 255, 255, 255);
+      if (typeof viewer.setTheme === 'function') viewer.setTheme('light-theme');
+    }
+    if (viewer.impl && viewer.impl.invalidate) viewer.impl.invalidate(true, true, true);
+  } catch (err) {
+    console.error('[Viewer] Erreur toggleModelDarkTheme :', err);
+  }
+
+  document.getElementById('btnDarkTheme')?.classList.toggle('active', modelDarkThemeOn);
+};

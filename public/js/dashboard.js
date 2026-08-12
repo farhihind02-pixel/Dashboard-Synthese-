@@ -42,10 +42,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     AppState.filteredElements = [...AppState.allElements];
     updateActivityBars(AppState.allElements);
     renderEtatKpis(computeEtatStats(AppState.allElements));
+    renderTopoKpis(computeEtatStats(AppState.allElements));
     renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
     renderReservationsParEtat(computeEtatStats(AppState.allElements));
     renderTypeOrientation(AppState.allElements);
     renderEtatCross(AppState.allElements);
+    renderZoneDonut(AppState.allElements);
+    renderSurfaceCumulee(AppState.allElements);
     initMultiSelects(AppState.stats);
   }
 
@@ -59,10 +62,13 @@ window.onViewerReady = async function(viewerInst) {
   AppState.filteredElements = [...AppState.allElements];
   updateActivityBars(AppState.allElements);
   renderEtatKpis(computeEtatStats(AppState.allElements));
+  renderTopoKpis(computeEtatStats(AppState.allElements));
   renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
   renderReservationsParEtat(computeEtatStats(AppState.allElements));
   renderTypeOrientation(AppState.allElements);
   renderEtatCross(AppState.allElements);
+  renderZoneDonut(AppState.allElements);
+  renderSurfaceCumulee(AppState.allElements);
   // Vider et reconstruire les dropdowns avec les vraies données du viewer
   ['msBlocDrop','msZoneDrop','msOrientationDrop','msTypeDrop','msEtatDrop'].forEach(id => {
     const drop = document.getElementById(id);
@@ -138,7 +144,7 @@ function closeAllDropdowns() {
 function initMultiSelects(stats) {
   // Blocs
   const blocs = Object.keys(stats.byBloc).sort();
-  buildMultiSelect('msBloc','msBlocDrop','msBlocBadge', blocs, b=>`Bloc ${b}`, 'bloc');
+  buildMultiSelect('msBloc','msBlocDrop','msBlocBadge', blocs, b=>getBlocLabel(b), 'bloc');
 
   // Zones
   const zones = Object.keys(stats.byZone).sort((a, b) => {
@@ -194,17 +200,21 @@ window.onQuickFilter = function() {
   AppState.filteredElements = filteredElements;
   updateActivityBars(filteredElements, filteredElements);
   renderEtatKpis(computeEtatStats(filteredElements));
+  renderTopoKpis(computeEtatStats(filteredElements));
   renderSecteursDeSecteur(computeEtatStats(filteredElements));
   renderReservationsParEtat(computeEtatStats(filteredElements));
   renderTypeOrientation(filteredElements);
   renderEtatCross(filteredElements);
+  renderZoneDonut(filteredElements);
+  renderSurfaceCumulee(filteredElements);
 
   const etatActive = MSState.etat.size > 0;
+  const blocZoneActive = MSState.bloc.size > 0 || MSState.zone.size > 0;
   const hasFilter = MSState.bloc.size>0||MSState.zone.size>0||MSState.orientation.size>0||MSState.type.size>0||etatActive;
-  applyViewerFilter(filteredElements, hasFilter, etatActive);
+  applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive);
 };
 
-function applyViewerFilter(filteredElements, hasFilter, etatActive) {
+function applyViewerFilter(filteredElements, hasFilter, etatActive, blocZoneActive) {
   if (!viewer || !viewer.model) { console.warn('[Filtre] viewer ou model pas prêt.'); return; }
   if (!hasFilter) {
     viewer.showAll();
@@ -233,17 +243,24 @@ function applyViewerFilter(filteredElements, hasFilter, etatActive) {
   }
 
   try {
-    // NE PAS utiliser isolate()/hide() : sur ce modèle volumineux (streaming HLOD),
-    // ces méthodes désynchronisent le rendu et vident la maquette. À la place, on
-    // garde TOUT chargé/visible et on rend les éléments non filtrés quasi transparents
-    // (ghosting via couleur override + alpha) — ça ne touche jamais le streaming de
-    // géométrie, donc c'est fiable même sur un gros modèle.
     viewer.showAll();
     viewer.clearThemingColors(viewer.model);
 
-    const GHOST_COLOR = new THREE.Vector4(0.4, 0.4, 0.4, 0.02);
-    // false = respecter le canal alpha de la couleur → transparence réellement appliquée
-    hiddenIds.forEach(id => viewer.setThemingColor(id, GHOST_COLOR, viewer.model, true));
+    if (blocZoneActive) {
+      // Filtre Bloc/Zone actif → masquage RÉEL des autres éléments (pas juste transparence).
+      // Toujours opérer sur la plus petite des deux listes (à cacher ou à isoler),
+      // c'est plus rapide et plus stable pour ce modèle.
+      if (filteredArr.length <= hiddenIds.length) {
+        viewer.isolate(filteredArr);
+      } else if (hiddenIds.length > 0) {
+        viewer.hide(hiddenIds);
+      }
+    } else {
+      // Filtres État/Type/Orientation → transparence (ghosting), méthode qui a fait ses
+      // preuves sur ce modèle pour ces cas-là.
+      const GHOST_COLOR = new THREE.Vector4(0.4, 0.4, 0.4, 0.02);
+      hiddenIds.forEach(id => viewer.setThemingColor(id, GHOST_COLOR, viewer.model, true));
+    }
 
     for (const el of filteredElements) {
       const id = parseInt(el.id);
@@ -371,10 +388,13 @@ window.resetQuickFilters = function() {
   AppState.filteredElements = [...AppState.allElements];
   updateActivityBars(AppState.allElements);
   renderEtatKpis(computeEtatStats(AppState.allElements));
+  renderTopoKpis(computeEtatStats(AppState.allElements));
   renderSecteursDeSecteur(computeEtatStats(AppState.allElements));
   renderReservationsParEtat(computeEtatStats(AppState.allElements));
   renderTypeOrientation(AppState.allElements);
   renderEtatCross(AppState.allElements);
+  renderZoneDonut(AppState.allElements);
+  renderSurfaceCumulee(AppState.allElements);
 
 if (viewer) {
     viewer.showAll();
@@ -414,7 +434,7 @@ window.exportPDF = function() {
 };
 // ── Carousel KPI (État ↔ Type/Orientation ↔ État×Type/État×Orientation) ───────
 let kpiCarouselIndex = 0;
-const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION', 'ÉTAT × TYPE / ORIENTATION'];
+const KPI_SLIDE_TITLES = ['SECTEURS DE SECTEUR', 'TYPE & ORIENTATION', 'ÉTAT × TYPE / ORIENTATION', 'ZONES & SURFACES'];
 
 function initKpiCarousel() {
   const track = document.getElementById('kpiCarouselTrack');

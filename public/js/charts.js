@@ -129,10 +129,11 @@ function initBlocChart(elements) {
   const blocs = Object.keys(byBloc).sort();
   const {labels,datasets} = getBlocData(byBloc, blocs);
   blocChart = new Chart(ctx, { type:'bar', data:{labels,datasets}, options:getBlocOptions() });
+  blocChart._rawBlocs = blocs; // valeurs brutes ('1','2','3'...) pour le clic, indépendant du libellé affiché
 }
 
 function getBlocData(byBloc, blocs) {
-  const labels = blocs.map(b => b === 'TGCC' ? 'Bloc TGCC' : `Bloc ${b}`);
+  const labels = blocs.map(b => getBlocLabel(b));
   return {
     labels,
     datasets: [
@@ -147,7 +148,7 @@ function getBlocData(byBloc, blocs) {
 function getBlocOptions() {
   return {
     responsive:true, maintainAspectRatio:false, animation:{duration:400},
-    onClick:(evt,els)=>{ if(els.length&&window.onBlocClick) window.onBlocClick(blocChart.data.labels[els[0].index].replace('Bloc ','')); },
+    onClick:(evt,els)=>{ if(els.length&&window.onBlocClick) window.onBlocClick(blocChart._rawBlocs?.[els[0].index] ?? blocChart.data.labels[els[0].index]); },
     plugins:{
       legend:{ display:true, position:'bottom', labels:{font:{size:10},boxWidth:10,padding:6,color:'#6B6B6B'} },
       tooltip:{ callbacks:{ label:ctx=> ` ${ctx.parsed.y.toLocaleString('fr-FR')} unités` } },
@@ -188,7 +189,7 @@ function renderBlocActivityTable(elements) {
 
   tbody.innerHTML = blocs.map(b => {
     const d = byBloc[b];
-    const label = b === 'TGCC' ? 'Bloc TGCC' : `Bloc ${b}`;
+    const label = getBlocLabel(b);
     return `<tr data-bloc="${b}" onclick="if(window.onBlocClick)window.onBlocClick('${b}')">
       <td><strong>${label}</strong></td>
       <td style="color:#D93025;font-weight:700">${d.ferrPct}%</td>
@@ -384,4 +385,134 @@ function renderEtatCross(elements) {
   const stats = computeEtatCrossStats(elements);
   renderEtatCrossTable('eoTypeHead', 'eoTypeBody', stats.typeCols, stats.byEtatType);
   renderEtatCrossTable('eoOrientationHead', 'eoOrientationBody', stats.orientCols, stats.byEtatOrient);
+}
+
+
+// ── Levées Topo (rangée principale, thème clair) ──────────────────────────────
+function renderTopoKpis(stats) {
+  if (!stats) return;
+  const { leve, aLever, aModeliser, aCreer } = stats;
+  const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
+  const pct = (c) => total > 0 ? (c / total * 100) : 0;
+  const fmtPct = (c) => pct(c).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+  const fmtVol = (v) => (v || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' m²';
+
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setWidth = (id, w) => { const el = document.getElementById(id); if (el) el.style.width = w + '%'; };
+
+  const leveesTopoCount = leve.count + aModeliser.count;
+  setText('topoLeveesTopoNum', leveesTopoCount.toLocaleString('fr-FR'));
+  setText('topoLeveesTopoSub', `${fmtPct(leveesTopoCount)} % · levées + à modéliser`);
+  setWidth('topoProgressLeve', fmtPct(leve.count));
+  setWidth('topoProgressModeliser', fmtPct(aModeliser.count));
+
+  setText('topoLeveNum', leve.count.toLocaleString('fr-FR'));
+  setText('topoLeveSub', `${fmtPct(leve.count)} % · ${fmtVol(leve.volume)}`);
+
+  setText('topoALeverNum', aLever.count.toLocaleString('fr-FR'));
+  setText('topoALeverSub', `${fmtPct(aLever.count)} % · ${fmtVol(aLever.volume)}`);
+
+  setText('topoAModeliserNum', aModeliser.count.toLocaleString('fr-FR'));
+  setText('topoAModeliserSub', `${fmtPct(aModeliser.count)} % · ${fmtVol(aModeliser.volume)}`);
+
+  setText('topoACreerNum', aCreer.count.toLocaleString('fr-FR'));
+  setText('topoACreerSub', `${fmtPct(aCreer.count)} % · ${fmtVol(aCreer.volume)}`);
+}
+
+// ── Réservations par zone (page 4) ─────────────────────────────────────────────
+let rzDonutChart = null;
+const RZ_PALETTE = ['#22b07d', '#E87722', '#4A78D9', '#D93077', '#C9A227', '#6B7280', '#17A2B8', '#8E44AD', '#2ECC71', '#E74C3C', '#3498DB', '#F39C12'];
+
+function renderZoneDonut(elements) {
+  const zoneStats = computeZoneStats(elements);
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  setText('rzTotalNum', zoneStats.total.toLocaleString('fr-FR'));
+  setText('rzZoneCountBadge', `${zoneStats.list.length} zone${zoneStats.list.length > 1 ? 's' : ''}`);
+
+  const legend = document.getElementById('rzLegend');
+  if (legend) {
+    legend.innerHTML = zoneStats.list.map(([zone, count], i) => {
+      const color = RZ_PALETTE[i % RZ_PALETTE.length];
+      const pct = zoneStats.total > 0 ? (count / zoneStats.total * 100) : 0;
+      return `
+        <div class="rz-legend-item">
+          <span class="rz-dot" style="background:${color}"></span>
+          <span class="rz-legend-label">Zone ${zone}</span>
+          <span class="rz-legend-count">${count.toLocaleString('fr-FR')}</span>
+          <span class="rz-legend-pct">${pct.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %</span>
+        </div>`;
+    }).join('') || '<div class="rz-sub">Aucune donnée</div>';
+  }
+
+  const ctx = document.getElementById('rzDonut');
+  if (!ctx) return;
+  if (rzDonutChart) { rzDonutChart.destroy(); rzDonutChart = null; }
+  rzDonutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: zoneStats.list.map(([zone]) => `Zone ${zone}`),
+      datasets: [{
+        data: zoneStats.list.map(([, count]) => count),
+        backgroundColor: zoneStats.list.map((_, i) => RZ_PALETTE[i % RZ_PALETTE.length]),
+        borderWidth: 2, borderColor: '#fff',
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: 700 },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed}` } } },
+    },
+  });
+}
+
+// ── Surface cumulée (page 4) ───────────────────────────────────────────────────
+let scCurrentGroupBy = 'orientation';
+let scCurrentElements = [];
+const SC_GROUP_LABELS = { etat: 'État', zone: 'Zone', type: 'Type', orientation: 'Orientation' };
+
+function fmtM2(v) {
+  return (v || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' m²';
+}
+
+window.scSetGroupBy = function(groupBy) {
+  scCurrentGroupBy = groupBy;
+  document.querySelectorAll('#scTabs .sc-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.group === groupBy);
+  });
+  renderSurfaceCumulee(scCurrentElements);
+};
+
+function renderSurfaceCumulee(elements) {
+  scCurrentElements = elements || [];
+  const stats = computeSurfaceStats(scCurrentElements, scCurrentGroupBy);
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  setText('scTotalSurface', fmtM2(stats.totalSurface));
+  setText('scAvgSurface', fmtM2(stats.avgSurface));
+  setText('scDimsAvailable', `${stats.withDims.toLocaleString('fr-FR')} / ${stats.totalCount.toLocaleString('fr-FR')}`);
+
+  const bars = document.getElementById('scBars');
+  if (!bars) return;
+  const maxSurface = stats.list.length ? stats.list[0].surface : 1;
+  const colorFor = (i) => RZ_PALETTE[i % RZ_PALETTE.length];
+
+  bars.innerHTML = stats.list.map((item, i) => {
+    const widthPct = maxSurface > 0 ? Math.round((item.surface / maxSurface) * 100) : 0;
+    return `
+      <div class="sc-bar-row">
+        <div class="sc-bar-top">
+          <div>
+            <div class="sc-bar-name">${item.label}</div>
+            <div class="sc-bar-meta">${item.count.toLocaleString('fr-FR')} réservations · ${item.pct.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % de la surface</div>
+          </div>
+          <div class="sc-bar-right">
+            <div class="sc-bar-val">${fmtM2(item.surface)}</div>
+            <div class="sc-bar-pct">${item.pct.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %</div>
+          </div>
+        </div>
+        <div class="sc-bar-track">
+          <div class="sc-bar-bg"><div class="sc-bar-fill" style="width:${widthPct}%;background:${colorFor(i)}"></div></div>
+        </div>
+      </div>`;
+  }).join('') || '<div class="rz-sub">Aucune donnée de surface disponible (Res_B / Res_H manquants).</div>';
 }

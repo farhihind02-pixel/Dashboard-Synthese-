@@ -58,6 +58,8 @@ async function loadDataFromViewer(viewer) {
           'Res_État', 'Res_Etat', 'RES_ÉTAT', 'RES_ETAT', 'res_état', 'res_etat',
           'Res_Famille', 'RES_FAMILLE', 'res_famille',
           'Res_Orientation', 'RES_ORIENTATION', 'res_orientation',
+          'Res_B', 'RES_B', 'res_b',
+          'Res_H', 'RES_H', 'res_h',
         ],
       },
       (results) => {
@@ -146,6 +148,21 @@ async function loadDataFromViewer(viewer) {
   });
 }
 
+// ── Bloc dérivé de Zone (le paramètre BLOC brut n'est pas fiable sur ce modèle) ─
+// Bloc 1 = Zones 8, 9, 10 | Bloc 2 = Zones 11, 12, 1, 2 | Bloc 3 = Zones 3, 4 | Bloc 4 = Zones 5, 6, 7
+const ZONE_TO_BLOC_MAP = {
+  '8': '1', '9': '1', '10': '1',
+  '11': '2', '12': '2', '1': '2', '2': '2',
+  '3': '3', '4': '3',
+  '5': '4', '6': '4', '7': '4',
+};
+function mapZoneToBloc(zoneValue) {
+  if (!zoneValue) return null;
+  const match = String(zoneValue).match(/\d+/);
+  const num = match ? String(parseInt(match[0], 10)) : String(zoneValue).trim();
+  return ZONE_TO_BLOC_MAP[num] || null;
+}
+
 function normalizeElementFromViewer(raw) {
   const props = {};
   for (const p of (raw.properties || [])) {
@@ -188,15 +205,23 @@ function normalizeElementFromViewer(raw) {
   const orientationRaw = get('Res_Orientation', 'RES_ORIENTATION', 'res_orientation');
   const orientation     = orientationRaw ? String(orientationRaw).trim() : null;
 
+  // Res_B × Res_H — surface (m²). Facteur de conversion ajustable si jamais les
+  // valeurs brutes sont en mm plutôt qu'en m (dans ce cas mettre 0.000001 ci-dessous).
+  const SURFACE_UNIT_FACTOR = 1;
+  const resB = parseVolumeValue(get('Res_B', 'RES_B', 'res_b'));
+  const resH = parseVolumeValue(get('Res_H', 'RES_H', 'res_h'));
+  const surface = (resB > 0 && resH > 0) ? (resB * resH * SURFACE_UNIT_FACTOR) : null;
+
   return {
     id:          String(raw.dbId),
     expressId:   raw.dbId,
     elementType,                              // ← ME_ELEMENT TYPE (ex: 'GD')
-    bloc:        get('Res_Bloc', 'BLOC', 'Bloc', 'RES_BLOC') ? String(get('Res_Bloc', 'BLOC', 'Bloc', 'RES_BLOC')).trim() : null,
-    zone:        get('ME_ELEMENT ZONE', 'ZONE', 'Zone', 'Res_Zone', 'RES_ZONE') ? String(get('ME_ELEMENT ZONE', 'ZONE', 'Zone', 'Res_Zone', 'RES_ZONE')).trim() : null,
+    bloc:        mapZoneToBloc(get('ZONE', 'Zone', 'ME_ELEMENT ZONE', 'Res_Zone', 'RES_ZONE')),
+    zone:        get('ZONE', 'Zone', 'ME_ELEMENT ZONE', 'Res_Zone', 'RES_ZONE') ? String(get('ZONE', 'Zone', 'ME_ELEMENT ZONE', 'Res_Zone', 'RES_ZONE')).trim() : null,
     level:       get('ME_ELEMENT LEVEL') ? String(get('ME_ELEMENT LEVEL')).trim() : null,
     orientation,                               // ← Res_Orientation
     resFamille,                                // ← Res_Famille (filtre Type)
+    resB, resH, surface,                       // ← Res_B × Res_H (m²)
     grue:        toBBFlag(get('Inaccessible')) === 1 ? 'XCMG' : 'GRUE_TOUR',
     ferr:        toBBFlag(get('BB FERR', 'BB_FERR')),
     coul:        toBBFlag(get('BB COULAGE', 'BB_COULAGE')),
@@ -475,5 +500,71 @@ function computeEtatCrossStats(elements) {
     orientCols: [...orientCols].sort(),
     byEtatType,
     byEtatOrient,
+  };
+}
+
+// ── Réservations par zone + Surface cumulée (page 4 du carousel) ──────────────
+function computeZoneStats(elements) {
+  const byZone = {};
+  let total = 0;
+  for (const el of (elements || [])) {
+    if (!el.zone) continue;
+    // Ne compter que les éléments ayant un des 4 états (Levé + À lever + À modéliser + À créer sur chantier)
+    if (!el.resEtat || !ETAT_ORDER.includes(el.resEtat)) continue;
+    total++;
+    byZone[el.zone] = (byZone[el.zone] || 0) + 1;
+  }
+  const list = Object.entries(byZone).sort((a, b) => {
+    const na = parseInt(String(a[0]).match(/\d+/)?.[0] ?? a[0], 10);
+    const nb = parseInt(String(b[0]).match(/\d+/)?.[0] ?? b[0], 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return String(a[0]).localeCompare(String(b[0]));
+  });
+  return { total, list };
+}
+
+// groupBy: 'etat' | 'zone' | 'type' | 'orientation'
+function computeSurfaceStats(elements, groupBy) {
+  const groupKeyFn = {
+    etat:        el => el.resEtat,
+    zone:        el => el.zone,
+    type:        el => el.resFamille,
+    orientation: el => el.orientation,
+  }[groupBy] || (el => el.orientation);
+
+  let totalSurface = 0;
+  let totalCount = 0;
+  let withDims = 0;
+  const byGroup = {};
+  const byGroupCount = {};
+
+  for (const el of (elements || [])) {
+    totalCount++;
+    if (el.surface != null) {
+      withDims++;
+      totalSurface += el.surface;
+      const key = groupKeyFn(el);
+      if (key) {
+        byGroup[key] = (byGroup[key] || 0) + el.surface;
+        byGroupCount[key] = (byGroupCount[key] || 0) + 1;
+      }
+    }
+  }
+
+  const list = Object.entries(byGroup)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, surface]) => ({
+      label,
+      surface,
+      count: byGroupCount[label] || 0,
+      pct: totalSurface > 0 ? (surface / totalSurface * 100) : 0,
+    }));
+
+  return {
+    totalSurface,
+    avgSurface: withDims > 0 ? totalSurface / withDims : 0,
+    withDims,
+    totalCount,
+    list,
   };
 }

@@ -18,9 +18,9 @@ const {
 } = process.env;
 
 // URN de l'item (lineage) ACC actuellement utilisé — mis à jour via /api/switch-model
-let CURRENT_ITEM_URN = 'urn:adsk.wipprod:dm.lineage:HfUaM8PpSwu4Ay9Tm4Mb7g'; // GSC-MAF-PE-ST-ZZ-ZZ-M3-001000_Syn 2.0 (1)_détaché_détaché1.rvt (V4)
+let CURRENT_ITEM_URN = 'urn:adsk.wipprod:dm.lineage:jmBpMMRvQd--jT9aDD-Ruw'; // GSC-MAF-PE-ST-ZZ-ZZ-M3-001000_Syn 2.0 (2)_détaché.rvt (V3)
 
-let VERSION_URN    = 'urn:adsk.wipprod:fs.file:vf.HfUaM8PpSwu4Ay9Tm4Mb7g?version=4'; // ← V4 confirmé (ne plus revenir à version=2 après un redéploiement)
+let VERSION_URN    = 'urn:adsk.wipprod:fs.file:vf.jmBpMMRvQd--jT9aDD-Ruw?version=3'; // ← à confirmer via /api/switch-model après déploiement
 let VIEWABLE_GUID  = 'f78d1b08-57e9-2515-8d58-efb0b9da5b51'; // fourni par le lien ACC (non requis par le viewer, gardé pour référence)
 const ACC_FOLDER_URN = 'urn:adsk.wipprod:fs.folder:co.wCGS1GRTQ9Osfrb_hKFevg';;
 
