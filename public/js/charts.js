@@ -440,17 +440,17 @@ function renderTopoKpis(stats) {
   setText('topoEnAttenteNum', aLever.count.toLocaleString('fr-FR'));
   setText('topoEnAttenteSub', `${fmtPct(aLever.count)} %`);
 
-  // "À confirmer" : pas de paramètre source défini pour l'instant → 0 en attendant.
-  setText('topoAConfirmerNum', '0');
-  setText('topoAConfirmerSub', '0 %');
+  // "À confirmer" : pas de paramètre source défini pour l'instant → valeur fixe en attendant.
+  setText('topoAConfirmerNum', '12');
+  setText('topoAConfirmerSub', `${fmtPct(12)} %`);
 
   // "À venir" : pas de paramètre source pour l'instant → 0 en attendant.
   setText('topoAVenirNum', '0');
   setText('topoAVenirSub', '0 %');
 
-  // "Théorique" : pas de paramètre source pour l'instant → 0 en attendant.
-  setText('topoTheoriqueNum', '0');
-  setText('topoTheoriqueSub', '0 %');
+  // "Théorique" : pas de paramètre source pour l'instant → valeur fixe en attendant.
+  setText('topoTheoriqueNum', '12');
+  setText('topoTheoriqueSub', `${fmtPct(12)} %`);
 }
 
 // ── Réservations par zone (page 4) ─────────────────────────────────────────────
