@@ -155,6 +155,42 @@
 
         <!-- PAGE 1 : État -->
         <div class="kpi-slide">
+          <div class="rpe-widget">
+            <div class="rpe-title">Réservations par état</div>
+            <div class="rpe-sub">Vue instantanée de la répartition.</div>
+            <div class="rpe-body">
+              <div class="rpe-donut-wrap">
+                <canvas id="rpeDonut"></canvas>
+                <div class="rpe-center">
+                  <div class="rpe-center-num" id="rpeTotalNum">—</div>
+                  <div class="rpe-center-lbl">RÉSERVATIONS</div>
+                </div>
+              </div>
+              <div class="rpe-legend">
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#22b07d"></span>
+                  <span class="rpe-legend-label">Levé</span>
+                  <span class="rpe-legend-val" id="rpeValLeve">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#E87722"></span>
+                  <span class="rpe-legend-label">À lever</span>
+                  <span class="rpe-legend-val" id="rpeValALever">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#4A78D9"></span>
+                  <span class="rpe-legend-label">À modéliser</span>
+                  <span class="rpe-legend-val" id="rpeValAModeliser">—</span>
+                </div>
+                <div class="rpe-legend-item">
+                  <span class="rpe-dot" style="background:#D93077"></span>
+                  <span class="rpe-legend-label">À créer sur chantier</span>
+                  <span class="rpe-legend-val" id="rpeValACreer">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="ss-widget">
           <div class="ss-sub">Lecture synthétique des réservations à lever, levées, à modéliser et à créer sur chantier.</div>
 
@@ -203,42 +239,6 @@
           </div>
 
           <div class="ss-total" id="ssTotal">— réservations</div>
-          </div>
-
-          <div class="rpe-widget">
-            <div class="rpe-title">Réservations par état</div>
-            <div class="rpe-sub">Vue instantanée de la répartition.</div>
-            <div class="rpe-body">
-              <div class="rpe-donut-wrap">
-                <canvas id="rpeDonut"></canvas>
-                <div class="rpe-center">
-                  <div class="rpe-center-num" id="rpeTotalNum">—</div>
-                  <div class="rpe-center-lbl">RÉSERVATIONS</div>
-                </div>
-              </div>
-              <div class="rpe-legend">
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#22b07d"></span>
-                  <span class="rpe-legend-label">Levé</span>
-                  <span class="rpe-legend-val" id="rpeValLeve">—</span>
-                </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#E87722"></span>
-                  <span class="rpe-legend-label">À lever</span>
-                  <span class="rpe-legend-val" id="rpeValALever">—</span>
-                </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#4A78D9"></span>
-                  <span class="rpe-legend-label">À modéliser</span>
-                  <span class="rpe-legend-val" id="rpeValAModeliser">—</span>
-                </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#D93077"></span>
-                  <span class="rpe-legend-label">À créer sur chantier</span>
-                  <span class="rpe-legend-val" id="rpeValACreer">—</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
