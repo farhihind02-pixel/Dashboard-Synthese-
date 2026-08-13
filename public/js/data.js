@@ -412,7 +412,7 @@ function computeBlocActivityStats(elements) {
 
 // ── État (Res_État) — stats pour les 5 cartes KPI ─────────────────────────────
 function computeEtatStats(elements) {
-  const ETATS = ['Levé', 'À lever', 'À modéliser', 'À créer dans le chantier'];
+  const ETATS = ['Levé', 'À lever', 'À modéliser', 'À créer dans le chantier', 'Theorique'];
   const byEtat = {};
   ETATS.forEach(e => byEtat[e] = { count: 0, volume: 0 });
 
@@ -436,6 +436,8 @@ function computeEtatStats(elements) {
     total:      { count: totalRestantCount, volume: totalRestantVolume },
     leve:       { count: byEtat['Levé'].count,                    volume: byEtat['Levé'].volume,                    pct: pct(byEtat['Levé'].count) },
     aLever:     { count: byEtat['À lever'].count,                 volume: byEtat['À lever'].volume,                 pct: pct(byEtat['À lever'].count) },
+    theorique:  { count: byEtat['Theorique'].count,               volume: byEtat['Theorique'].volume,               pct: pct(byEtat['Theorique'].count) },
+    aConfirmer: { count: byEtat['À créer dans le chantier'].count + byEtat['Theorique'].count, volume: byEtat['À créer dans le chantier'].volume + byEtat['Theorique'].volume, pct: pct(byEtat['À créer dans le chantier'].count + byEtat['Theorique'].count) },
     aModeliser: { count: byEtat['À modéliser'].count,              volume: byEtat['À modéliser'].volume,              pct: pct(byEtat['À modéliser'].count) },
     aCreer:     { count: byEtat['À créer dans le chantier'].count, volume: byEtat['À créer dans le chantier'].volume, pct: pct(byEtat['À créer dans le chantier'].count) },
   };

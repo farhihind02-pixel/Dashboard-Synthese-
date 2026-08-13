@@ -156,38 +156,42 @@
         <!-- PAGE 1 : État -->
         <div class="kpi-slide">
           <div class="rpe-widget">
-            <div class="rpe-title">Réservations par état</div>
-            <div class="rpe-sub">Vue instantanée de la répartition.</div>
-            <div class="rpe-body">
-              <div class="rpe-donut-wrap">
-                <canvas id="rpeDonut"></canvas>
-                <div class="rpe-center">
-                  <div class="rpe-center-num" id="rpeTotalNum">—</div>
-                  <div class="rpe-center-lbl">RÉSERVATIONS</div>
+            <div class="rpe-title">ÉTAT DES RÉSERVATIONS</div>
+            <div class="rpe-sub">Cercle extérieur : État · Cercle intérieur : État Global</div>
+            <div class="rpe-body" style="flex-direction:column;gap:16px;">
+
+              <!-- Double donut -->
+              <div style="position:relative;width:220px;height:220px;margin:0 auto;">
+                <canvas id="rpeDonutOuter" width="220" height="220" style="position:absolute;top:0;left:0;"></canvas>
+                <canvas id="rpeDonutInner" width="220" height="220" style="position:absolute;top:0;left:0;"></canvas>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                  <div class="rpe-center-num" id="rpeTotalNum" style="font-size:22px;font-weight:800;">—</div>
+                  <div class="rpe-center-lbl" style="font-size:9px;color:#6b7a8d;">RÉSERVATIONS</div>
                 </div>
               </div>
-              <div class="rpe-legend">
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#22b07d"></span>
-                  <span class="rpe-legend-label">Levé</span>
-                  <span class="rpe-legend-val" id="rpeValLeve">—</span>
+
+              <!-- Légendes -->
+              <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;">
+                <!-- État (extérieur) -->
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:#16213e;margin-bottom:6px;text-transform:uppercase;">État</div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#D93077"></span><span class="rpe-legend-label">À créer sur chantier</span><span class="rpe-legend-val" id="rpeValACreer">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#9B59B6"></span><span class="rpe-legend-label">Théorique</span><span class="rpe-legend-val" id="rpeValTheorique">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#E87722"></span><span class="rpe-legend-label">En attente</span><span class="rpe-legend-val" id="rpeValALever">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#B8960C"></span><span class="rpe-legend-label">À venir</span><span class="rpe-legend-val" id="rpeValAVenir">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#22b07d"></span><span class="rpe-legend-label">Levée</span><span class="rpe-legend-val" id="rpeValLeve">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#4A78D9"></span><span class="rpe-legend-label">À modéliser</span><span class="rpe-legend-val" id="rpeValAModeliser">—</span></div>
                 </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#E87722"></span>
-                  <span class="rpe-legend-label">À lever</span>
-                  <span class="rpe-legend-val" id="rpeValALever">—</span>
-                </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#4A78D9"></span>
-                  <span class="rpe-legend-label">À modéliser</span>
-                  <span class="rpe-legend-val" id="rpeValAModeliser">—</span>
-                </div>
-                <div class="rpe-legend-item">
-                  <span class="rpe-dot" style="background:#D93077"></span>
-                  <span class="rpe-legend-label">À créer sur chantier</span>
-                  <span class="rpe-legend-val" id="rpeValACreer">—</span>
+                <!-- État Global (intérieur) -->
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:#16213e;margin-bottom:6px;text-transform:uppercase;">État Global</div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#E91E8C"></span><span class="rpe-legend-label">À confirmer</span><span class="rpe-legend-val" id="rpeValAConfirmer">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#FF8C00"></span><span class="rpe-legend-label">Reste à lever</span><span class="rpe-legend-val" id="rpeValResteALever">—</span></div>
+                  <div class="rpe-legend-item"><span class="rpe-dot" style="background:#00CC88"></span><span class="rpe-legend-label">Levée TOPO</span><span class="rpe-legend-val" id="rpeValLeveeTopo">—</span></div>
                 </div>
               </div>
+
+              <div style="font-size:10px;color:#9ca3af;text-align:center;">Les pourcentages sont calculés sur le nombre total de réservations (<span id="rpeTotalCount">—</span>)</div>
             </div>
           </div>
 

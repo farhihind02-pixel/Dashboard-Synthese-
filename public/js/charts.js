@@ -2,7 +2,7 @@
  * charts.js — Graphiques SGTM
  */
 let kpiDonutChart=null, blocChart=null;
-let rpeDonutChart=null;
+// rpeDonutChart → rpeDonutOuterChart + rpeDonutInnerChart
 
 const SGTM_BLOCS = new Set(['1','2','3']);
 const TGCC_BLOCS = new Set(['TGCC']);
@@ -299,39 +299,91 @@ function renderSecteursDeSecteur(stats) {
   renderSecteursDeSecteurInto(stats, 'ss');
 }
 // ── Réservations par état (donut simple + légende) ────────────────────────────
+let rpeDonutOuterChart = null;
+let rpeDonutInnerChart = null;
+
 function renderReservationsParEtat(stats) {
   if (!stats) return;
-  const { leve, aLever, aModeliser, aCreer } = stats;
-  const total = leve.count + aLever.count + aModeliser.count + aCreer.count;
+  const { leve, aLever, aModeliser, aCreer, theorique, aConfirmer } = stats;
+
+  const aVenir    = { count: 0 };
+  const enAttente = aLever;
+  // Total = somme de tous les états (leve - 2 pour exclure les 2 parasites)
+  const leveCorr  = leve.count - 2;
+  const total = leveCorr + enAttente.count + aModeliser.count + aCreer.count + (theorique?.count || 0) + aVenir.count;
 
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const fmtPct = (c) => total > 0 ? (c / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) : '0';
+  const fmtPct  = (c) => total > 0 ? (c / total * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) : '0';
   const fmtLine = (c) => `${c.toLocaleString('fr-FR')} · ${fmtPct(c)} %`;
 
-  setText('rpeTotalNum', total.toLocaleString('fr-FR'));
-  setText('rpeValLeve',       fmtLine(leve.count));
-  setText('rpeValALever',     fmtLine(aLever.count));
-  setText('rpeValAModeliser', fmtLine(aModeliser.count));
-  setText('rpeValACreer',     fmtLine(aCreer.count));
+  setText('rpeTotalNum',       total.toLocaleString('fr-FR'));
+  setText('rpeTotalCount',     total.toLocaleString('fr-FR'));
+  setText('rpeValLeve',        fmtLine(leveCorr));
+  setText('rpeValALever',      fmtLine(enAttente.count));
+  setText('rpeValAModeliser',  fmtLine(aModeliser.count));
+  setText('rpeValACreer',      fmtLine(aCreer.count));
+  setText('rpeValTheorique',   fmtLine(theorique?.count || 0));
+  setText('rpeValAVenir',      fmtLine(aVenir.count));
+  setText('rpeValAConfirmer',  fmtLine(aConfirmer?.count || 0));
+  setText('rpeValResteALever', fmtLine(enAttente.count + aVenir.count));
+  setText('rpeValLeveeTopo',   fmtLine(leveCorr + aModeliser.count));
 
-  const ctx = document.getElementById('rpeDonut');
-  if (!ctx) return;
-  if (rpeDonutChart) { rpeDonutChart.destroy(); rpeDonutChart = null; }
-  rpeDonutChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Levé', 'À lever', 'À modéliser', 'À créer sur chantier'],
-      datasets: [{
-        data: [leve.count, aLever.count, aModeliser.count, aCreer.count],
-        backgroundColor: ['#22b07d', '#E87722', '#4A78D9', '#D93077'],
-        borderWidth: 3, borderColor: '#fff',
-      }],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '72%', animation: { duration: 700 },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed}` } } },
-    },
-  });
+  // ── Cercle EXTÉRIEUR (État détaillé) ─────────────────────────────────────
+  const ctxOuter = document.getElementById('rpeDonutOuter');
+  if (ctxOuter) {
+    if (rpeDonutOuterChart) { rpeDonutOuterChart.destroy(); rpeDonutOuterChart = null; }
+    rpeDonutOuterChart = new Chart(ctxOuter, {
+      type: 'doughnut',
+      data: {
+        labels: ['À créer sur chantier', 'Théorique', 'En attente', 'À venir', 'Levée', 'À modéliser'],
+        datasets: [{
+          data: [aCreer.count, theorique?.count || 0, enAttente.count, aVenir.count, leveCorr, aModeliser.count],
+          backgroundColor: ['#D93077', '#9B59B6', '#E87722', '#B8960C', '#22b07d', '#4A78D9'],
+          borderWidth: 3, borderColor: '#fff',
+          weight: 1,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '55%',
+        animation: { duration: 700 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed.toLocaleString('fr-FR')} (${fmtPct(c.parsed)} %)` } }
+        },
+      },
+    });
+  }
+
+  // ── Cercle INTÉRIEUR (État Global) ───────────────────────────────────────
+  const ctxInner = document.getElementById('rpeDonutInner');
+  if (ctxInner) {
+    if (rpeDonutInnerChart) { rpeDonutInnerChart.destroy(); rpeDonutInnerChart = null; }
+    const aConfirmerCount = aConfirmer?.count || 0;
+    const resteALever     = enAttente.count + aVenir.count;
+    const leveeTopo       = leveCorr + aModeliser.count;
+    rpeDonutInnerChart = new Chart(ctxInner, {
+      type: 'doughnut',
+      data: {
+        labels: ['À confirmer', 'Reste à lever', 'Levée TOPO'],
+        datasets: [{
+          data: [aConfirmerCount, resteALever, leveeTopo],
+          backgroundColor: ['#E91E8C', '#FF8C00', '#00CC88'],
+          borderWidth: 3, borderColor: '#fff',
+          weight: 0.6,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '75%',
+        animation: { duration: 700 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.label} : ${c.parsed.toLocaleString('fr-FR')} (${fmtPct(c.parsed)} %)` } }
+        },
+      },
+    });
+  }
 }
 
 // ── Type / Orientation / Type × Orientation (barres + tableau croisé) ─────────
@@ -417,13 +469,13 @@ function renderTopoKpis(stats) {
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const setWidth = (id, w) => { const el = document.getElementById(id); if (el) el.style.width = w + '%'; };
 
-  const leveesTopoCount = leve.count + aModeliser.count;
-  setText('topoLeveesTopoNum', leveesTopoCount.toLocaleString('fr-FR'));
+  const leveesTopoCount = (leve.count - 2) + aModeliser.count;
+setText('topoLeveesTopoNum', leveesTopoCount.toLocaleString('fr-FR'));
   setText('topoLeveesTopoSub', `${fmtPct(leveesTopoCount)} % · levées + à modéliser`);
   setWidth('topoProgressLeve', fmtPct(leve.count));
   setWidth('topoProgressModeliser', fmtPct(aModeliser.count));
 
-  setText('topoLeveNum', leve.count.toLocaleString('fr-FR'));
+  setText('topoLeveNum', (leve.count - 2).toLocaleString('fr-FR'));
   setText('topoLeveSub', `${fmtPct(leve.count)} %`);
 
   setText('topoALeverNum', aLever.count.toLocaleString('fr-FR'));
@@ -440,17 +492,19 @@ function renderTopoKpis(stats) {
   setText('topoEnAttenteNum', aLever.count.toLocaleString('fr-FR'));
   setText('topoEnAttenteSub', `${fmtPct(aLever.count)} %`);
 
-  // "À confirmer" : pas de paramètre source défini pour l'instant → valeur fixe en attendant.
-  setText('topoAConfirmerNum', '12');
-  setText('topoAConfirmerSub', `${fmtPct(12)} %`);
+  // "À confirmer" = À créer + Théorique
+  const aConfirmerStats = stats.aConfirmer || { count: 0 };
+  setText('topoAConfirmerNum', aConfirmerStats.count.toLocaleString('fr-FR'));
+  setText('topoAConfirmerSub', `${fmtPct(aConfirmerStats.count)} %`);
 
   // "À venir" : pas de paramètre source pour l'instant → 0 en attendant.
   setText('topoAVenirNum', '0');
   setText('topoAVenirSub', '0 %');
 
-  // "Théorique" : pas de paramètre source pour l'instant → valeur fixe en attendant.
-  setText('topoTheoriqueNum', '12');
-  setText('topoTheoriqueSub', `${fmtPct(12)} %`);
+  // "Théorique" = éléments avec Res_État = 'Théorique'
+  const theoriqueStats = stats.theorique || { count: 0 };
+  setText('topoTheoriqueNum', theoriqueStats.count.toLocaleString('fr-FR'));
+  setText('topoTheoriqueSub', `${fmtPct(theoriqueStats.count)} %`);
 }
 
 // ── Réservations par zone (page 4) ─────────────────────────────────────────────
